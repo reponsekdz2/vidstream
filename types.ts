@@ -3,7 +3,7 @@ export interface User {
   name: string;
   email: string;
   password?: string;
-  avatarUrl: string;
+  avatarUrl?: string; // Optional for letter-based default
   subscribers: number;
   subscriptions: string[]; // Array of user IDs
 }
@@ -57,4 +57,30 @@ export interface Comment {
     };
     text: string;
     timestamp: string;
+}
+
+export interface Playlist {
+    id: string;
+    userId: string;
+    name: string;
+    description: string;
+    videoIds: string[];
+    thumbnailUrl: string; // URL of the first video in the playlist
+}
+
+export interface HistoryItem {
+    id: string;
+    userId: string;
+    videoId: string;
+    watchedAt: string; // ISO string
+    video: Video;
+}
+
+export interface Notification {
+    id: string;
+    userId: string;
+    text: string;
+    timestamp: string;
+    isRead: boolean;
+    link: string;
 }

@@ -12,6 +12,11 @@ import Register from './pages/Register';
 import MyChannel from './pages/MyChannel';
 import Channel from './pages/Channel';
 import Upload from './pages/Upload';
+import Settings from './pages/Settings';
+import Playlists from './pages/Playlists';
+import PlaylistDetail from './pages/PlaylistDetail';
+import History from './pages/History';
+import Downloads from './pages/Downloads';
 
 const App: React.FC = () => {
   return (
@@ -31,6 +36,11 @@ const App: React.FC = () => {
             <Route path="/my-channel" element={<MyChannel />} />
             <Route path="/channel/:userId" element={<Channel />} />
             <Route path="/upload" element={<Upload />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/playlists" element={<Playlists />} />
+            <Route path="/playlist/:id" element={<PlaylistDetail />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/downloads" element={<Downloads />} />
           </Routes>
         </main>
       </div>

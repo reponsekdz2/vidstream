@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import type { Video, Comment as CommentType, User } from '../types';
-import { ShareIcon, PlusIcon, CheckIcon, HandThumbUpIcon } from '@heroicons/react/24/solid';
-import { MyListContext } from '../context/MyListContext';
+import { ShareIcon, PlusIcon, FolderPlusIcon, HandThumbUpIcon } from '@heroicons/react/24/solid';
 import { AuthContext } from '../context/AuthContext';
 import ReactPlayer from 'react-player/lazy';
 import { fetchWithCache, clearCache } from '../utils/api';
 import Comment from '../components/Comment';
+import PlaylistModal from '../components/PlaylistModal';
 
 const Watch: React.FC = () => {
   const { id: videoId } = useParams<{ id: string }>();
@@ -16,11 +16,10 @@ const Watch: React.FC = () => {
   const [newComment, setNewComment] = useState("");
   const [recommendedVideos, setRecommendedVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
 
-  const { list, addToList, removeFromList } = useContext(MyListContext);
   const { currentUser, login, updateUserSubscriptions } = useContext(AuthContext);
 
-  const isInList = video ? list.some(item => item.id === video.id) : false;
   const isSubscribed = currentUser && channel ? currentUser.subscriptions.includes(channel.id) : false;
 
   useEffect(() => {
@@ -50,24 +49,37 @@ const Watch: React.FC = () => {
     };
     fetchVideoData();
   }, [videoId]);
-
-  const handleToggleList = () => {
-    if (video) {
-        if (isInList) removeFromList(video.id);
-        else addToList(video);
+  
+  // Add to history
+  useEffect(() => {
+    if (currentUser && video) {
+      const addToHistory = async () => {
+        try {
+          await fetch(`/api/v1/history`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUser.id, videoId: video.id }),
+          });
+          clearCache(`/api/v1/users/${currentUser.id}/history`);
+        } catch (error) {
+          console.error("Failed to add to history:", error);
+        }
+      };
+      
+      const timer = setTimeout(addToHistory, 5000); // Add to history after 5 seconds of watch time
+      return () => clearTimeout(timer);
     }
-  };
+  }, [currentUser, video]);
+
 
   const handleLike = async () => {
     if (!video) return;
-    // Optimistic update
     const originalLikes = video.likes;
     setVideo(prev => prev ? { ...prev, likes: prev.likes + 1 } : null);
 
     try {
       const response = await fetch(`/api/v1/videos/${video.id}/like`, { method: 'POST' });
       if (!response.ok) {
-        // Revert on error
         setVideo(prev => prev ? { ...prev, likes: originalLikes } : null);
       } else {
         clearCache(`/api/v1/videos/${video.id}`);
@@ -78,10 +90,9 @@ const Watch: React.FC = () => {
   };
 
   const handleSubscribe = async () => {
-    if (!currentUser) return login("admin@vidstream.com", "password123"); // Demo login
+    if (!currentUser) return login("admin@vidstream.com", "password123");
     if (!channel) return;
 
-    // Optimistic UI update
     const originalSubscriptions = [...currentUser.subscriptions];
     const newSubscriptions = isSubscribed
         ? originalSubscriptions.filter(id => id !== channel.id)
@@ -97,7 +108,6 @@ const Watch: React.FC = () => {
             body: JSON.stringify({ userId: currentUser.id, channelId: channel.id }),
         });
         if (!response.ok) {
-            // Revert on failure
             updateUserSubscriptions(originalSubscriptions);
             setChannel(prev => prev ? { ...prev, subscribers: prev.subscribers + (isSubscribed ? 1 : -1) } : null);
         } else {
@@ -117,12 +127,11 @@ const Watch: React.FC = () => {
     const tempComment: CommentType = {
         id: `temp-${Date.now()}`,
         videoId: video.id,
-        user: { id: currentUser.id, name: currentUser.name, avatarUrl: currentUser.avatarUrl },
+        user: { id: currentUser.id, name: currentUser.name, avatarUrl: currentUser.avatarUrl || '' },
         text: newComment,
         timestamp: 'Just now'
     };
 
-    // Optimistic update
     setComments(prev => [tempComment, ...prev]);
     setNewComment("");
 
@@ -134,13 +143,11 @@ const Watch: React.FC = () => {
         });
         const actualComment = await response.json();
         
-        // Replace temp comment with actual from server
         setComments(prev => prev.map(c => c.id === tempComment.id ? actualComment : c));
         clearCache(`/api/v1/videos/${video.id}/comments`);
 
     } catch (error) {
         console.error("Failed to post comment:", error);
-        // Revert optimistic update
         setComments(prev => prev.filter(c => c.id !== tempComment.id));
     }
   };
@@ -150,6 +157,13 @@ const Watch: React.FC = () => {
   if (!video || !channel) return <div className="p-8 text-center text-dark-text-secondary">Video not found.</div>;
   
   return (
+    <>
+    {isPlaylistModalOpen && video && (
+        <PlaylistModal
+            videoToAdd={video}
+            onClose={() => setIsPlaylistModalOpen(false)}
+        />
+    )}
     <div className="flex flex-col lg:flex-row gap-6 p-4 sm:p-6 lg:p-8 max-w-screen-2xl mx-auto">
       <div className="flex-grow lg:w-2/3">
         <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-lg shadow-brand-red/20">
@@ -181,9 +195,9 @@ const Watch: React.FC = () => {
                 <HandThumbUpIcon className="w-5 h-5"/>
                 <span className="text-sm font-semibold">{video.likes.toLocaleString()}</span>
               </button>
-              <button onClick={handleToggleList} className="flex items-center gap-2 px-4 py-1.5 bg-dark-element hover:bg-dark-surface rounded-full transition-colors">
-                {isInList ? <CheckIcon className="w-5 h-5"/> : <PlusIcon className="w-5 h-5" />}
-                <span className="text-sm font-semibold">{isInList ? "On My List" : "My List"}</span>
+              <button onClick={() => setIsPlaylistModalOpen(true)} className="flex items-center gap-2 px-4 py-1.5 bg-dark-element hover:bg-dark-surface rounded-full transition-colors">
+                <FolderPlusIcon className="w-5 h-5" />
+                <span className="text-sm font-semibold">Save</span>
               </button>
                <button className="flex items-center gap-2 px-4 py-1.5 bg-dark-element hover:bg-dark-surface rounded-full ml-2">
                 <ShareIcon className="w-5 h-5"/>
@@ -246,6 +260,7 @@ const Watch: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

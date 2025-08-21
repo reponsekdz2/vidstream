@@ -12,6 +12,27 @@ export const getUserById = (req, res) => {
     }
 };
 
+export const updateUserProfile = (req, res) => {
+    const { id } = req.params;
+    const { name, avatarUrl } = req.body;
+    
+    const userIndex = users.findIndex(u => u.id === id);
+    
+    if (userIndex === -1) {
+        return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (name) {
+        users[userIndex].name = name;
+    }
+    if (avatarUrl) {
+        users[userIndex].avatarUrl = avatarUrl;
+    }
+    
+    const { password, ...updatedUser } = users[userIndex];
+    res.json(updatedUser);
+};
+
 export const getUserVideos = (req, res) => {
     const { id } = req.params;
     const userVideos = videos.filter(v => v.userId === id);

@@ -7,6 +7,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<User>;
   logout: () => void;
   updateUserSubscriptions: (subscriptionIds: string[]) => void;
+  updateCurrentUser: (userData: Partial<User>) => void;
   loading: boolean;
 }
 
@@ -16,6 +17,7 @@ export const AuthContext = createContext<AuthContextType>({
   register: async () => { throw new Error('register function not yet implemented'); },
   logout: () => {},
   updateUserSubscriptions: () => {},
+  updateCurrentUser: () => {},
   loading: true,
 });
 
@@ -94,6 +96,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           updateUserInStorage(updatedUser);
       }
   };
+  
+  const updateCurrentUser = (userData: Partial<User>) => {
+    if (currentUser) {
+      const updatedUser = { ...currentUser, ...userData };
+      updateUserInStorage(updatedUser);
+    }
+  };
+
 
   const value = {
     currentUser,
@@ -101,6 +111,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     updateUserSubscriptions,
+    updateCurrentUser,
     loading,
   };
 
