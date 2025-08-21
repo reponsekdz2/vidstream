@@ -1,11 +1,42 @@
+export interface UserSettings {
+  notifications: {
+    newUploads: boolean;
+    comments: boolean;
+    mentions: boolean;
+  };
+  playback: {
+    defaultQuality: 'Auto' | '1080p' | '720p' | '480p';
+    autoplay: boolean;
+  };
+  privacy: {
+    showLikedVideos: boolean;
+    showSubscriptions: boolean;
+  };
+}
+
+export interface ChannelLayoutShelf {
+  id: string;
+  type: 'LATEST_UPLOADS' | 'POPULAR_UPLOADS' | 'PLAYLIST';
+  title: string;
+  playlistId?: string;
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
   password?: string;
-  avatarUrl?: string; // Optional for letter-based default
+  avatarUrl?: string; 
+  bannerUrl?: string;
+  about?: string;
+  featuredVideoId?: string;
+  socialLinks?: { [key: string]: string };
   subscribers: number;
-  subscriptions: string[]; // Array of user IDs
+  subscriptions: string[];
+  settings: UserSettings;
+  channelLayout: ChannelLayoutShelf[];
+  blockedUsers: string[];
+  bannedWords: string[];
 }
 
 export interface Video {
@@ -62,6 +93,28 @@ export interface Comment {
     timestamp: string;
 }
 
+export interface PollOption {
+  id: string;
+  text: string;
+  votes: number;
+}
+
+export interface CommunityPost {
+  id: string;
+  userId: string;
+  user: {
+    name: string;
+    avatarUrl: string;
+  };
+  text: string;
+  imageUrl?: string;
+  poll?: PollOption[];
+  likes: number;
+  timestamp: string;
+  userVote?: string; // Option ID
+}
+
+
 export interface Playlist {
     id: string;
     userId: string;
@@ -94,6 +147,7 @@ export interface VideoAnalytics {
     likes: number;
     commentCount: number;
     avgWatchDuration: string; // e.g., "3:45"
+    sentiment?: { positive: number; neutral: number; negative: number; };
 }
 
 export interface CreatorAnalytics {
@@ -105,6 +159,14 @@ export interface CreatorAnalytics {
     subscribersOverTime: { date: string; subscribers: number }[];
     videoPerformance: VideoAnalytics[];
 }
+
+export interface MonetizationData {
+    isEligible: boolean;
+    subscribers: { current: number; required: number };
+    watchHours: { current: number; required: number };
+    estimatedEarnings: { month: string; earnings: number }[];
+}
+
 
 export interface LiveChatMessage {
     id: string;

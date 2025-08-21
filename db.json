@@ -1,479 +1,61 @@
-
 {
   "users": [
     {
       "id": "user-1",
       "name": "Admin User",
       "email": "admin@vidstream.com",
-      "password": "password123",
+      "password": "$2a$10$Y.3.G8i9g.N5.LW/C4.Ua.H8fJ0.f.Q.e.f3jJ2.g5lJ6kH4mI8rK",
       "avatarUrl": "https://i.pravatar.cc/150?u=admin@vidstream.com",
       "subscribers": 15,
       "subscriptions": [
         "user-2",
         "user-3",
         "user-6"
-      ]
-    },
-    {
-      "id": "user-2",
-      "name": "TravelVibes",
-      "email": "travel@test.com",
-      "password": "password123",
-      "avatarUrl": "https://i.pravatar.cc/150?u=user2",
-      "subscribers": 1200000,
-      "subscriptions": [
-        "user-4"
-      ]
-    },
-    {
-      "id": "user-3",
-      "name": "CodeMaster",
-      "email": "code@test.com",
-      "password": "password123",
-      "avatarUrl": "https://i.pravatar.cc/150?u=user3",
-      "subscribers": 850000,
-      "subscriptions": [
-        "user-6",
-        "user-7"
-      ]
-    },
-    {
-      "id": "user-4",
-      "name": "GourmetChef",
-      "email": "chef@test.com",
-      "password": "password123",
-      "avatarUrl": "https://i.pravatar.cc/150?u=user4",
-      "subscribers": 3100000,
-      "subscriptions": []
-    },
-    {
-      "id": "user-5",
-      "name": "ZenLife",
-      "email": "zen@test.com",
-      "password": "password123",
-      "avatarUrl": "https://i.pravatar.cc/150?u=user5",
-      "subscribers": 500000,
-      "subscriptions": [
-        "user-2"
-      ]
-    },
-    {
-      "id": "user-6",
-      "name": "TechFlow",
-      "email": "tech@test.com",
-      "password": "password123",
-      "avatarUrl": "https://i.pravatar.cc/150?u=user6",
-      "subscribers": 2200000,
-      "subscriptions": [
-        "user-3"
-      ]
-    },
-    {
-      "id": "user-7",
-      "name": "FutureProof",
-      "email": "future@test.com",
-      "password": "password123",
-      "avatarUrl": "https://i.pravatar.cc/150?u=user7",
-      "subscribers": 4500000,
-      "subscriptions": [
-        "user-6"
-      ]
+      ],
+      "settings": {
+        "notifications": {
+          "newUploads": true,
+          "comments": true,
+          "mentions": false
+        },
+        "playback": {
+          "defaultQuality": "Auto",
+          "autoplay": true
+        },
+        "privacy": {
+          "showLikedVideos": true,
+          "showSubscriptions": true
+        }
+      },
+      "channelLayout": [],
+      "blockedUsers": [],
+      "bannedWords": []
     }
   ],
-  "videos": [
+  "videos": [],
+  "shorts": [],
+  "comments": [],
+  "playlists": [],
+  "history": [],
+  "notifications": [],
+  "liveChatMessages": [],
+  "communityPosts": [
     {
-      "id": "1",
+      "id": "post-1",
       "userId": "user-2",
-      "thumbnailUrl": "https://picsum.photos/seed/vid1/1280/720",
-      "videoUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-      "videoPreviewUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-      "title": "Exploring the Alps: A Scenic Journey",
-      "duration": "0:15",
       "user": {
-        "id": "user-2",
         "name": "TravelVibes",
-        "avatarUrl": "https://i.pravatar.cc/150?u=user2",
-        "subscribers": 1200000
+        "avatarUrl": "https://i.pravatar.cc/150?u=user2"
       },
-      "views": "2.5M views",
-      "viewCount": 2500000,
-      "commentCount": 4500,
-      "isLive": false,
-      "uploadedAt": "2 weeks ago",
-      "description": "Join us on an epic adventure through the Swiss Alps. Breathtaking views, challenging hikes, and unforgettable moments. This is nature at its finest.",
-      "genre": "Travel",
-      "likes": 152000
-    },
-    {
-      "id": "2",
-      "userId": "user-3",
-      "thumbnailUrl": "https://picsum.photos/seed/vid2/1280/720",
-      "videoUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-      "videoPreviewUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-      "title": "Ultimate Guide to React Hooks in 2024",
-      "duration": "1:00",
-      "user": {
-        "id": "user-3",
-        "name": "CodeMaster",
-        "avatarUrl": "https://i.pravatar.cc/150?u=user3",
-        "subscribers": 850000
-      },
-      "views": "1.8M views",
-      "viewCount": 1800000,
-      "commentCount": 8200,
-      "isLive": false,
-      "uploadedAt": "1 month ago",
-      "description": "Deep dive into React Hooks. We cover useState, useEffect, useContext, and custom hooks with practical examples to level up your development skills.",
-      "genre": "Education",
-      "likes": 98000
-    },
-    {
-      "id": "3",
-      "userId": "user-4",
-      "thumbnailUrl": "https://picsum.photos/seed/vid3/1280/720",
-      "videoUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-      "videoPreviewUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-      "title": "How to Cook the Perfect Steak",
-      "duration": "9:56",
-      "user": {
-        "id": "user-4",
-        "name": "GourmetChef",
-        "avatarUrl": "https://i.pravatar.cc/150?u=user4",
-        "subscribers": 3100000
-      },
-      "views": "5.2M views",
-      "viewCount": 5200000,
-      "commentCount": 12000,
-      "isLive": false,
-      "uploadedAt": "3 days ago",
-      "description": "Learn the secrets to cooking a restaurant-quality steak at home. From selecting the cut to the perfect sear, we cover it all.",
-      "genre": "Cooking",
-      "likes": 275000
-    },
-    {
-      "id": "4",
-      "userId": "user-5",
-      "thumbnailUrl": "https://picsum.photos/seed/vid4/1280/720",
-      "videoUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-      "videoPreviewUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-      "title": "Mindfulness Meditation for Beginners",
-      "duration": "10:53",
-      "user": {
-        "id": "user-5",
-        "name": "ZenLife",
-        "avatarUrl": "https://i.pravatar.cc/150?u=user5",
-        "subscribers": 500000
-      },
-      "views": "980K views",
-      "viewCount": 980000,
-      "commentCount": 3100,
-      "isLive": false,
-      "uploadedAt": "1 week ago",
-      "description": "A guided 20-minute meditation session to help you find peace and clarity. Perfect for beginners looking to start their mindfulness journey.",
-      "genre": "Lifestyle",
-      "likes": 45000
-    },
-    {
-      "id": "5",
-      "userId": "user-6",
-      "thumbnailUrl": "https://picsum.photos/seed/vid5/1280/720",
-      "videoUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-      "videoPreviewUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-      "title": "Building a Gaming PC in 2024",
-      "duration": "0:15",
-      "user": {
-        "id": "user-6",
-        "name": "TechFlow",
-        "avatarUrl": "https://i.pravatar.cc/150?u=user6",
-        "subscribers": 2200000
-      },
-      "views": "3.1M views",
-      "viewCount": 3100000,
-      "commentCount": 25000,
-      "isLive": true,
-      "uploadedAt": "2 months ago",
-      "description": "A step-by-step guide to building a powerful gaming PC with the latest components. We go over parts selection, assembly, and setup.",
-      "genre": "Technology",
-      "likes": 310000
-    },
-    {
-      "id": "6",
-      "userId": "user-7",
-      "thumbnailUrl": "https://picsum.photos/seed/vid6/1280/720",
-      "videoUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-      "videoPreviewUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-      "title": "The Rise of AI: Explained",
-      "duration": "0:15",
-      "user": {
-        "id": "user-7",
-        "name": "FutureProof",
-        "avatarUrl": "https://i.pravatar.cc/150?u=user7",
-        "subscribers": 4500000
-      },
-      "views": "10M views",
-      "viewCount": 10000000,
-      "commentCount": 95000,
-      "isLive": false,
-      "uploadedAt": "3 weeks ago",
-      "description": "An in-depth documentary exploring the history, present, and future of Artificial Intelligence. What does it mean for humanity?",
-      "genre": "Documentary",
-      "likes": 950000
-    },
-    {
-      "id": "7",
-      "userId": "user-3",
-      "thumbnailUrl": "https://picsum.photos/seed/vid7/1280/720",
-      "videoUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
-      "videoPreviewUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
-      "title": "Advanced CSS Animations",
-      "duration": "0:15",
-      "user": {
-        "id": "user-3",
-        "name": "CodeMaster",
-        "avatarUrl": "https://i.pravatar.cc/150?u=user3",
-        "subscribers": 850000
-      },
-      "views": "750K views",
-      "viewCount": 750000,
-      "commentCount": 1500,
-      "isLive": false,
-      "uploadedAt": "1 week ago",
-      "description": "Take your web animations to the next level with these advanced CSS techniques.",
-      "genre": "Education",
-      "likes": 62000
-    },
-    {
-      "id": "8",
-      "userId": "user-2",
-      "thumbnailUrl": "https://picsum.photos/seed/vid8/1280/720",
-      "videoUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
-      "videoPreviewUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
-      "title": "Off-Roading Adventure",
-      "duration": "2:45",
-      "user": {
-        "id": "user-2",
-        "name": "TravelVibes",
-        "avatarUrl": "https://i.pravatar.cc/150?u=user2",
-        "subscribers": 1200000
-      },
-      "views": "1.1M views",
-      "viewCount": 1100000,
-      "commentCount": 2300,
-      "isLive": false,
-      "uploadedAt": "5 days ago",
-      "description": "Pushing the limits in the great outdoors with some serious off-roading.",
-      "genre": "Travel",
-      "likes": 88000
-    }
-  ],
-  "shorts": [
-    {
-      "id": "s1",
-      "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-a-woman-in-a-bikini-with-a-hat-stands-by-the-sea-4029-small.mp4",
-      "user": {
-        "name": "ArtFlow",
-        "avatarUrl": "https://i.pravatar.cc/150?u=shortuser1",
-        "subscribers": "1.1M"
-      },
-      "title": "Amazing paint pour! 🎨",
-      "likes": "3.2M",
-      "comments": "12K"
-    },
-    {
-      "id": "s2",
-      "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-a-surfer-walks-on-the-beach-at-sunset-4174-small.mp4",
-      "user": {
-        "name": "NatureLover",
-        "avatarUrl": "https://i.pravatar.cc/150?u=shortuser2",
-        "subscribers": "500K"
-      },
-      "title": "This view is unreal 😍",
-      "likes": "1.8M",
-      "comments": "8.5K"
-    },
-    {
-      "id": "s3",
-      "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-man-in-a-suit-walking-on-a-beach-1925-small.mp4",
-      "user": {
-        "name": "CutePets",
-        "avatarUrl": "https://i.pravatar.cc/150?u=shortuser3",
-        "subscribers": "12M"
-      },
-      "title": "Puppy discovering his reflection",
-      "likes": "22.5M",
-      "comments": "150K"
-    },
-    {
-      "id": "s4",
-      "videoUrl": "https://assets.mixkit.co/videos/preview/mixkit-woman-running-on-the-beach-1065-small.mp4",
-      "user": {
-        "name": "WorkoutPro",
-        "avatarUrl": "https://i.pravatar.cc/150?u=shortuser4",
-        "subscribers": "2.1M"
-      },
-      "title": "Quick 30s core burner 🔥",
-      "likes": "800K",
-      "comments": "4.2K"
-    }
-  ],
-  "comments": [
-    {
-      "id": "comment-1",
-      "videoId": "1",
-      "user": {
-        "id": "user-3",
-        "name": "CodeMaster",
-        "avatarUrl": "https://i.pravatar.cc/150?u=user3"
-      },
-      "text": "Wow, the scenery is absolutely stunning! Makes me want to book a trip right now.",
-      "timestamp": "2024-07-28T10:00:00Z"
-    },
-    {
-      "id": "comment-2",
-      "videoId": "1",
-      "user": {
-        "id": "user-5",
-        "name": "ZenLife",
-        "avatarUrl": "https://i.pravatar.cc/150?u=user5"
-      },
-      "text": "Great video quality. What drone did you use for those aerial shots?",
-      "timestamp": "2024-07-29T14:30:00Z"
-    },
-    {
-      "id": "comment-3",
-      "videoId": "2",
-      "user": {
-        "id": "user-6",
-        "name": "TechFlow",
-        "avatarUrl": "https://i.pravatar.cc/150?u=user6"
-      },
-      "text": "This was the clearest explanation of React Hooks I have ever seen. Thank you!",
-      "timestamp": "2024-07-30T09:00:00Z"
-    },
-    {
-      "id": "comment-4",
-      "videoId": "2",
-      "user": {
-        "id": "user-1",
-        "name": "Admin User",
-        "avatarUrl": "https://i.pravatar.cc/150?u=admin@vidstream.com"
-      },
-      "text": "Awesome content! Looking forward to more tutorials.",
-      "timestamp": "2024-07-30T11:20:00Z"
-    }
-  ],
-  "playlists": [
-    {
-      "id": "pl-1",
-      "userId": "user-1",
-      "name": "Tech & Code",
-      "description": "My favorite videos about technology and programming.",
-      "videoIds": [
-        "2",
-        "5",
-        "7"
-      ],
-      "thumbnailUrl": "https://picsum.photos/seed/vid2/1280/720"
-    },
-    {
-      "id": "pl-2",
-      "userId": "user-1",
-      "name": "Travel Inspiration",
-      "description": "Beautiful places I want to visit someday.",
-      "videoIds": [
-        "1",
-        "8"
-      ],
-      "thumbnailUrl": "https://picsum.photos/seed/vid1/1280/720"
-    },
-    {
-      "id": "pl-3",
-      "userId": "user-2",
-      "name": "Cooking Ideas",
-      "description": "",
-      "videoIds": [
-        "3"
-      ],
-      "thumbnailUrl": "https://picsum.photos/seed/vid3/1280/720"
-    }
-  ],
-  "history": [
-    {
-      "id": "hist-1",
-      "userId": "user-1",
-      "videoId": "4",
-      "watchedAt": "2024-07-28T18:45:00.000Z"
-    },
-    {
-      "id": "hist-2",
-      "userId": "user-1",
-      "videoId": "6",
-      "watchedAt": "2024-07-29T20:15:00.000Z"
-    }
-  ],
-  "notifications": [
-    {
-      "id": "notif-1",
-      "userId": "user-1",
-      "text": "TravelVibes just uploaded a new video: \"Off-Roading Adventure\".",
-      "timestamp": "5 hours ago",
-      "isRead": false,
-      "link": "/watch/8"
-    },
-    {
-      "id": "notif-2",
-      "userId": "user-1",
-      "text": "CodeMaster just uploaded a new video: \"Advanced CSS Animations\".",
-      "timestamp": "2 days ago",
-      "isRead": false,
-      "link": "/watch/7"
-    },
-    {
-      "id": "notif-3",
-      "userId": "user-1",
-      "text": "Welcome to VidStream! Check out the latest trending videos.",
-      "timestamp": "1 week ago",
-      "isRead": true,
-      "link": "/"
-    }
-  ],
-  "liveChatMessages": [
-    {
-      "id": "lc-1",
-      "videoId": "5",
-      "user": {
-        "name": "GamerX",
-        "avatarUrl": "https://i.pravatar.cc/150?u=gamerx"
-      },
-      "message": "This build is insane! Can't wait to see the benchmarks."
-    },
-    {
-      "id": "lc-2",
-      "videoId": "5",
-      "user": {
-        "name": "Pixel_Princess",
-        "avatarUrl": "https://i.pravatar.cc/150?u=pixel"
-      },
-      "message": "Are you going to overclock the CPU?"
-    },
-    {
-      "id": "lc-3",
-      "videoId": "5",
-      "user": {
-        "name": "ModBot",
-        "avatarUrl": "https://i.pravatar.cc/150?u=modbot",
-        "isMod": true
-      },
-      "message": "Please keep the chat respectful. No spoilers!"
-    },
-    {
-      "id": "lc-4",
-      "videoId": "5",
-      "user": {
-        "name": "TechHead",
-        "avatarUrl": "https://i.pravatar.cc/150?u=techhead"
-      },
-      "message": "What case fans are you using? They look great."
+      "text": "Just got back from an amazing trip to Japan! 🇯🇵 New video dropping this Friday. What part of the country should I visit next?",
+      "likes": 1200,
+      "timestamp": "2024-07-30T10:00:00Z",
+      "poll": [
+        { "id": "p1-o1", "text": "Tokyo", "votes": 150 },
+        { "id": "p1-o2", "text": "Kyoto", "votes": 250 },
+        { "id": "p1-o3", "text": "Hokkaido", "votes": 180 },
+        { "id": "p1-o4", "text": "Okinawa", "votes": 90 }
+      ]
     }
   ]
 }

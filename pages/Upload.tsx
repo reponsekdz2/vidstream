@@ -2,17 +2,27 @@ import React, { useState, useContext } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { clearCache } from '../utils/api';
+import { ArrowUpTrayIcon, VideoCameraIcon, PhotoIcon } from '@heroicons/react/24/solid';
 
 const Upload: React.FC = () => {
   const { currentUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [videoUrl, setVideoUrl] = useState('');
-  const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [genre, setGenre] = useState('Lifestyle');
   const [error, setError] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [loading, setLoading] = useState(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fileType: 'video' | 'thumbnail') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (fileType === 'video') setVideoFile(file);
+      else setThumbnailFile(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,40 +30,55 @@ const Upload: React.FC = () => {
       setError("You must be logged in to upload a video.");
       return;
     }
+    if (!videoFile || !thumbnailFile) {
+        setError("Both a video file and a thumbnail image are required.");
+        return;
+    }
     setError('');
     setLoading(true);
 
+    const formData = new FormData();
+    formData.append('userId', currentUser.id);
+    formData.append('title', title);
+    formData.append('description', description);
+    formData.append('genre', genre);
+    formData.append('videoFile', videoFile);
+    formData.append('thumbnailFile', thumbnailFile);
+
     try {
-      const response = await fetch('/api/v1/videos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: currentUser.id,
-          title,
-          description,
-          videoUrl,
-          thumbnailUrl,
-          genre,
-        }),
-      });
-
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || 'Failed to upload video.');
-      }
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/v1/videos', true);
       
-      const newVideo = await response.json();
+      xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+              const percentComplete = Math.round((event.loaded / event.total) * 100);
+              setUploadProgress(percentComplete);
+          }
+      };
 
-      // Clear relevant caches
-      clearCache('/api/v1/videos');
-      clearCache(`/api/v1/users/${currentUser.id}/videos`);
+      xhr.onload = () => {
+        setLoading(false);
+        if (xhr.status === 201) {
+            const newVideo = JSON.parse(xhr.responseText);
+            clearCache('/api/v1/videos');
+            clearCache(`/api/v1/users/${currentUser.id}/videos`);
+            navigate(`/watch/${newVideo.id}`);
+        } else {
+            const errData = JSON.parse(xhr.responseText);
+            setError(errData.message || 'Failed to upload video.');
+        }
+      };
+      
+      xhr.onerror = () => {
+          setLoading(false);
+          setError('An error occurred during the upload. Please try again.');
+      };
 
-      navigate(`/watch/${newVideo.id}`);
+      xhr.send(formData);
 
     } catch (err: any) {
-      setError(err.message);
-    } finally {
       setLoading(false);
+      setError(err.message);
     }
   };
 
@@ -71,6 +96,28 @@ const Upload: React.FC = () => {
 
         <form className="space-y-6" onSubmit={handleSubmit}>
           
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Video File Input */}
+            <div className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-dark-element rounded-lg">
+                <VideoCameraIcon className="w-12 h-12 text-dark-text-secondary"/>
+                <label htmlFor="video-file" className="mt-2 text-sm font-medium text-brand-red cursor-pointer">
+                    Select Video File
+                </label>
+                <input id="video-file" type="file" className="hidden" accept="video/*" onChange={e => handleFileChange(e, 'video')} />
+                {videoFile && <p className="text-xs text-center mt-2 text-dark-text-secondary truncate">{videoFile.name}</p>}
+            </div>
+
+            {/* Thumbnail File Input */}
+            <div className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-dark-element rounded-lg">
+                <PhotoIcon className="w-12 h-12 text-dark-text-secondary"/>
+                <label htmlFor="thumbnail-file" className="mt-2 text-sm font-medium text-brand-red cursor-pointer">
+                    Select Thumbnail
+                </label>
+                <input id="thumbnail-file" type="file" className="hidden" accept="image/*" onChange={e => handleFileChange(e, 'thumbnail')} />
+                {thumbnailFile && <p className="text-xs text-center mt-2 text-dark-text-secondary truncate">{thumbnailFile.name}</p>}
+            </div>
+          </div>
+          
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-dark-text-secondary">Title</label>
             <input id="title" type="text" required value={title} onChange={(e) => setTitle(e.target.value)}
@@ -82,21 +129,7 @@ const Upload: React.FC = () => {
             <textarea id="description" required value={description} onChange={(e) => setDescription(e.target.value)}
               className="mt-1 block w-full px-3 py-2 bg-dark-element border border-dark-element rounded-md" rows={4}></textarea>
           </div>
-
-          <div>
-            <label htmlFor="videoUrl" className="block text-sm font-medium text-dark-text-secondary">Video URL</label>
-            <input id="videoUrl" type="url" required value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)}
-              placeholder="e.g., http://commondatastorage.googleapis.com/.../video.mp4"
-              className="mt-1 block w-full px-3 py-2 bg-dark-element border border-dark-element rounded-md" />
-          </div>
-
-          <div>
-            <label htmlFor="thumbnailUrl" className="block text-sm font-medium text-dark-text-secondary">Thumbnail URL</label>
-            <input id="thumbnailUrl" type="url" required value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)}
-              placeholder="e.g., https://picsum.photos/1280/720"
-              className="mt-1 block w-full px-3 py-2 bg-dark-element border border-dark-element rounded-md" />
-          </div>
-
+          
            <div>
             <label htmlFor="genre" className="block text-sm font-medium text-dark-text-secondary">Genre</label>
             <select id="genre" value={genre} onChange={(e) => setGenre(e.target.value)}
@@ -109,6 +142,13 @@ const Upload: React.FC = () => {
                 <option>Documentary</option>
             </select>
           </div>
+          
+          {loading && (
+            <div className="w-full bg-dark-element rounded-full h-2.5">
+              <div className="bg-brand-red h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+              <p className="text-center text-sm mt-1">{uploadProgress}%</p>
+            </div>
+          )}
           
           <div>
             <button

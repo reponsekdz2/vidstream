@@ -26,6 +26,13 @@ export const getVideoById = (req, res) => {
   }
 };
 
+export const getPopularVideos = (req, res) => {
+  const { userId } = req.params;
+  const userVideos = db.data.videos.filter(v => v.userId === userId);
+  const popularVideos = [...userVideos].sort((a,b) => b.viewCount - a.viewCount).slice(0, 10);
+  res.json(popularVideos);
+};
+
 export const likeVideo = async (req, res) => {
     const { id } = req.params;
     const video = db.data.videos.find(v => v.id === id);
@@ -39,16 +46,21 @@ export const likeVideo = async (req, res) => {
 };
 
 export const uploadVideo = async (req, res) => {
-    const { userId, title, description, videoUrl, thumbnailUrl, genre } = req.body;
+    const { userId, title, description, genre } = req.body;
+    const videoFile = req.files?.videoFile?.[0];
+    const thumbnailFile = req.files?.thumbnailFile?.[0];
     
-    if (!userId || !title || !description || !videoUrl || !thumbnailUrl || !genre) {
-        return res.status(400).json({ message: 'All fields are required for upload.' });
+    if (!userId || !title || !description || !genre || !videoFile || !thumbnailFile) {
+        return res.status(400).json({ message: 'All fields and files are required for upload.' });
     }
     
     const user = db.data.users.find(u => u.id === userId);
     if (!user) {
         return res.status(404).json({ message: 'Uploading user not found.' });
     }
+
+    const videoUrl = `/uploads/${videoFile.filename}`;
+    const thumbnailUrl = `/uploads/${thumbnailFile.filename}`;
 
     const newVideo = {
         id: uuidv4(),
@@ -57,7 +69,7 @@ export const uploadVideo = async (req, res) => {
         videoUrl,
         videoPreviewUrl: videoUrl,
         title,
-        duration: '0:00',
+        duration: '0:00', // This would ideally be extracted from the video file on the backend
         user: {
             id: user.id,
             name: user.name,

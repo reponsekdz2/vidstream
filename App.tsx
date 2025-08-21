@@ -21,6 +21,9 @@ import Miniplayer from './components/Miniplayer';
 import Trending from './pages/Trending';
 import Live from './pages/Live';
 import CreatorDashboard from './pages/CreatorDashboard';
+import CustomizeChannel from './pages/CustomizeChannel';
+import Monetization from './pages/Monetization';
+import Moderation from './pages/Moderation';
 import { ThemeContext } from './context/ThemeContext';
 
 const App: React.FC = () => {
@@ -41,7 +44,10 @@ const App: React.FC = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/my-channel" element={<MyChannel />} />
+            <Route path="/my-channel/customize" element={<CustomizeChannel />} />
             <Route path="/creator-dashboard" element={<CreatorDashboard />} />
+            <Route path="/creator-dashboard/monetization" element={<Monetization />} />
+            <Route path="/creator-dashboard/moderation" element={<Moderation />} />
             <Route path="/channel/:userId" element={<Channel />} />
             <Route path="/upload" element={<Upload />} />
             <Route path="/settings" element={<Settings />} />
