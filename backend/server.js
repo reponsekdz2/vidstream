@@ -1,0 +1,33 @@
+import express from 'express';
+import cors from 'cors';
+
+// Import v1 API routes
+import authRoutes from './api/v1/routes/auth.js';
+import videoRoutes from './api/v1/routes/videos.js';
+import userRoutes from './api/v1/routes/users.js';
+import commentRoutes from './api/v1/routes/comments.js';
+
+const app = express();
+const port = 3001;
+
+// Middlewares
+app.use(cors());
+app.use(express.json());
+
+// API v1 Routes
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/videos', videoRoutes);
+app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/videos', commentRoutes); // e.g. /api/v1/videos/:videoId/comments
+
+
+// A simple catch-all for old, non-versioned routes for graceful degradation
+app.get('/api/shorts', (req, res) => {
+    // This is just a sample, you might want to redirect or fetch from the new structure
+    res.json([]); 
+});
+
+
+app.listen(port, () => {
+  console.log(`Backend server listening at http://localhost:${port}`);
+});

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VidStream - A Netflix-like Experience</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'brand-red': '#E50914',
+              'brand-red-dark': '#B81D24',
+              'dark-bg': '#141414',
+              'dark-surface': '#222222',
+              'dark-element': '#383838',
+              'dark-text-primary': '#ffffff',
+              'dark-text-secondary': '#e5e5e5',
+            }
+          }
+        },
+        plugins: [
+          function({ addUtilities }) {
+            addUtilities({
+              '.scrollbar-hide': {
+                'scrollbar-width': 'none', /* Firefox */
+                '&::-webkit-scrollbar': {
+                  display: 'none' /* Chrome, Safari, and Opera */
+                }
+              }
+            })
+          }
+        ]
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.1.1/",
+    "react": "https://esm.sh/react@^19.1.1",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.8.1",
+    "react-player": "https://esm.sh/react-player@^3.0.1",
+    "@heroicons/react/": "https://esm.sh/@heroicons/react@^2.1.5/",
+    "@heroicons/react/20/solid/": "https://esm.sh/@heroicons/react@^2.1.5/20/solid/",
+    "express": "https://esm.sh/express@^5.1.0",
+    "cors": "https://esm.sh/cors@^2.8.5",
+    "react-player/": "https://esm.sh/react-player@^3.3.1/"
+  }
+}
+</script>
+</head>
+  <body class="bg-dark-bg text-dark-text-primary">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
