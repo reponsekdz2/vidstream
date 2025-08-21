@@ -34,7 +34,34 @@
   ],
   "videos": [],
   "shorts": [],
-  "comments": [],
+  "comments": [
+    {
+      "id": "comment-1",
+      "videoId": "1",
+      "user": {
+        "id": "user-3",
+        "name": "CodeMaster",
+        "avatarUrl": "https://i.pravatar.cc/150?u=user3"
+      },
+      "text": "This is a top-level comment.",
+      "timestamp": "2024-08-01T10:00:00Z",
+      "parentId": null,
+      "replyCount": 1
+    },
+    {
+      "id": "reply-1",
+      "videoId": "1",
+      "user": {
+        "id": "user-2",
+        "name": "TravelVibes",
+        "avatarUrl": "https://i.pravatar.cc/150?u=user2"
+      },
+      "text": "This is a reply to the first comment!",
+      "timestamp": "2024-08-01T10:05:00Z",
+      "parentId": "comment-1",
+      "replyCount": 0
+    }
+  ],
   "playlists": [],
   "history": [],
   "notifications": [],
@@ -57,5 +84,16 @@
         { "id": "p1-o4", "text": "Okinawa", "votes": 90 }
       ]
     }
-  ]
+  ],
+  "membershipTiers": [],
+  "transactions": [],
+  "ads": [
+    {
+      "id": "ad-1",
+      "videoUrl": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
+      "duration": 5
+    }
+  ],
+  "premieres": [],
+  "premiumUsers": []
 }

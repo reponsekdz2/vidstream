@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Navigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { CurrencyDollarIcon, UserGroupIcon, ClockIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
+import { CurrencyDollarIcon, UserGroupIcon, ClockIcon, HeartIcon, TicketIcon } from '@heroicons/react/24/solid';
 import { fetchWithCache } from '../utils/api';
 import type { MonetizationData } from '../types';
 
@@ -51,8 +51,26 @@ const Monetization: React.FC = () => {
             </p>
           </div>
           
+           <div className="bg-light-surface dark:bg-dark-surface p-6 rounded-lg">
+                <h3 className="text-xl font-bold mb-4">Revenue Streams</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-4 bg-light-element dark:bg-dark-element rounded-lg text-center">
+                        <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">Ad Revenue (est.)</p>
+                        <p className="text-2xl font-bold">${data.estimatedEarnings.reduce((acc, m) => acc + m.earnings, 0).toLocaleString()}</p>
+                    </div>
+                    <div className="p-4 bg-light-element dark:bg-dark-element rounded-lg text-center">
+                        <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">Super Thanks</p>
+                        <p className="text-2xl font-bold">${data.superThanksRevenue.toLocaleString()}</p>
+                    </div>
+                    <div className="p-4 bg-light-element dark:bg-dark-element rounded-lg text-center">
+                        <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">Memberships</p>
+                        <p className="text-2xl font-bold">${data.membershipRevenue.toLocaleString()}</p>
+                    </div>
+                </div>
+            </div>
+
           <div className="bg-light-surface dark:bg-dark-surface p-6 rounded-lg">
-            <h3 className="text-xl font-bold mb-4">How to Join</h3>
+            <h3 className="text-xl font-bold mb-4">How to Join the Partner Program</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col items-center text-center p-4 bg-light-element dark:bg-dark-element rounded-lg">
                 <UserGroupIcon className="w-12 h-12 text-brand-red mb-2" />
@@ -80,10 +98,11 @@ const Monetization: React.FC = () => {
         </div>
         
         <div className="bg-light-surface dark:bg-dark-surface p-6 rounded-lg">
-          <h3 className="text-xl font-bold">Estimated Earnings</h3>
-           <div className="h-64 mt-4 bg-light-element dark:bg-dark-element rounded-md flex items-center justify-center">
-            <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">(Chart Placeholder)</p>
-           </div>
+          <h3 className="text-xl font-bold">Ways to Earn</h3>
+          <ul className="mt-4 space-y-4">
+            <li className="flex items-start gap-3"><TicketIcon className="w-6 h-6 text-brand-red flex-shrink-0 mt-1"/><div><h4 className="font-semibold">Channel Memberships</h4><p className="text-sm text-dark-text-secondary">Create a recurring income stream with monthly payments from your fans.</p></div></li>
+            <li className="flex items-start gap-3"><HeartIcon className="w-6 h-6 text-brand-red flex-shrink-0 mt-1"/><div><h4 className="font-semibold">Super Thanks</h4><p className="text-sm text-dark-text-secondary">Let your fans show extra appreciation by purchasing a one-time animation on your videos.</p></div></li>
+          </ul>
         </div>
 
       </div>

@@ -7,6 +7,8 @@ import { AuthProvider } from './context/AuthContext';
 import { PlayerProvider } from './context/PlayerContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { DownloadsProvider } from './context/DownloadsContext';
+import { PremiumProvider } from './context/PremiumContext';
+import { AdProvider } from './context/AdContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -19,13 +21,17 @@ root.render(
     <HashRouter>
       <ThemeProvider>
         <AuthProvider>
-          <MyListProvider>
-            <DownloadsProvider>
-              <PlayerProvider>
-                <App />
-              </PlayerProvider>
-            </DownloadsProvider>
-          </MyListProvider>
+          <PremiumProvider>
+            <MyListProvider>
+              <DownloadsProvider>
+                <AdProvider>
+                  <PlayerProvider>
+                    <App />
+                  </PlayerProvider>
+                </AdProvider>
+              </DownloadsProvider>
+            </MyListProvider>
+          </PremiumProvider>
         </AuthProvider>
       </ThemeProvider>
     </HashRouter>

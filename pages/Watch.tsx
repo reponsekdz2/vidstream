@@ -1,30 +1,34 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import type { Video, Comment as CommentType, User } from '../types';
-import { ShareIcon, FolderPlusIcon, HandThumbUpIcon, ArrowDownTrayIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/solid';
+import { ShareIcon, FolderPlusIcon, HandThumbUpIcon, ArrowDownTrayIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon, HeartIcon, TicketIcon } from '@heroicons/react/24/solid';
 import { AuthContext } from '../context/AuthContext';
 import ReactPlayer from 'react-player/lazy';
 import { fetchWithCache, clearCache } from '../utils/api';
-import Comment from '../components/Comment';
 import PlaylistModal from '../components/PlaylistModal';
 import { PlayerContext } from '../context/PlayerContext';
 import LiveChat from '../components/LiveChat';
 import { DownloadsContext } from '../context/DownloadsContext';
+import { AdContext } from '../context/AdContext';
+import CommentThread from '../components/comments/CommentThread';
+import PremiereCountdown from '../components/premiere/PremiereCountdown';
+import Avatar from '../components/Avatar';
 
 const Watch: React.FC = () => {
   const { id: videoId } = useParams<{ id: string }>();
   const [video, setVideo] = useState<Video | null>(null);
   const [channel, setChannel] = useState<User | null>(null);
   const [comments, setComments] = useState<CommentType[]>([]);
-  const [newComment, setNewComment] = useState("");
   const [recommendedVideos, setRecommendedVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
+  const [isSuperThanksOpen, setIsSuperThanksOpen] = useState(false);
   const [theatreMode, setTheatreMode] = useState(false);
 
   const { currentUser, login, updateUserSubscriptions } = useContext(AuthContext);
   const { playVideo, currentVideo } = useContext(PlayerContext);
   const { downloads, addToDownloads, removeFromDownloads } = useContext(DownloadsContext);
+  const { showAd, isAdPlaying } = useContext(AdContext);
   
   const location = useLocation();
   const playerRef = useRef<ReactPlayer>(null);
@@ -51,6 +55,8 @@ const Watch: React.FC = () => {
         setComments(commentsData);
         setRecommendedVideos(allVideosData.filter((v: Video) => v.id !== videoId).slice(0, 10));
 
+        showAd();
+
       } catch (error) {
         console.error("Failed to fetch video data:", error);
         setVideo(null);
@@ -59,7 +65,7 @@ const Watch: React.FC = () => {
       }
     };
     fetchVideoData();
-  }, [videoId, playVideo, location.pathname]);
+  }, [videoId, playVideo, location.pathname, showAd]);
   
   // Keyboard shortcuts
   useEffect(() => {
@@ -68,18 +74,18 @@ const Watch: React.FC = () => {
         if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
 
         switch (e.key.toLowerCase()) {
-            case ' ':
-                e.preventDefault();
-                playerRef.current?.getInternalPlayer()?.play(); // Does not work perfectly with ReactPlayer, but an attempt
-                break;
             case 'f':
                 playerRef.current?.getInternalPlayer()?.requestFullscreen();
                 break;
             case 'm':
-                const player = playerRef.current?.getInternalPlayer();
-                if (player) {
-                    player.muted = !player.muted;
-                }
+                 const internalPlayer = playerRef.current?.getInternalPlayer();
+                 if (internalPlayer && typeof internalPlayer.mute === 'function') {
+                    if (internalPlayer.isMuted()) {
+                      internalPlayer.unMute();
+                    } else {
+                      internalPlayer.mute();
+                    }
+                 }
                 break;
             case 't':
                 setTheatreMode(prev => !prev);
@@ -92,7 +98,7 @@ const Watch: React.FC = () => {
 
   // Add to history
   useEffect(() => {
-    if (currentUser && video) {
+    if (currentUser && video && !isAdPlaying) {
       const addToHistory = async () => {
         try {
           await fetch(`/api/v1/history`, {
@@ -109,7 +115,7 @@ const Watch: React.FC = () => {
       const timer = setTimeout(addToHistory, 5000); // Add to history after 5 seconds of watch time
       return () => clearTimeout(timer);
     }
-  }, [currentUser, video]);
+  }, [currentUser, video, isAdPlaying]);
 
 
   const handleLike = async () => {
@@ -144,27 +150,6 @@ const Watch: React.FC = () => {
         console.error("Subscription failed:", error);
     }
   };
-  
-  const handleCommentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newComment.trim() || !currentUser || !video) return;
-    
-    setNewComment("");
-
-    try {
-        const response = await fetch(`/api/v1/videos/${video.id}/comments`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: currentUser.id, text: newComment }),
-        });
-        const actualComment = await response.json();
-        setComments(prev => [actualComment, ...prev]);
-        clearCache(`/api/v1/videos/${video.id}/comments`);
-
-    } catch (error) {
-        console.error("Failed to post comment:", error);
-    }
-  };
 
   const handleDownloadToggle = () => {
     if (!video) return;
@@ -175,6 +160,8 @@ const Watch: React.FC = () => {
 
   if (loading) return <WatchSkeleton />;
   if (!video || !channel) return <div className="p-8 text-center text-dark-text-secondary dark:text-dark-text-secondary">Video not found.</div>;
+  
+  const isPremiere = video.premiereTime && new Date(video.premiereTime) > new Date();
   
   return (
     <>
@@ -187,21 +174,25 @@ const Watch: React.FC = () => {
     <div className={`flex ${theatreMode ? 'flex-col' : 'flex-col lg:flex-row'} gap-6 p-4 sm:p-6 lg:p-8 max-w-screen-2xl mx-auto`}>
       <div className={`${theatreMode ? 'w-full' : 'lg:w-2/3'} flex-grow`}>
         {!isVideoInPlayer && (
-            <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-lg shadow-brand-red/20 relative group">
-                <ReactPlayer 
-                    ref={playerRef}
-                    url={video.videoUrl} 
-                    controls 
-                    playing 
-                    width="100%" 
-                    height="100%" 
-                    light={video.thumbnailUrl} />
-                <button 
-                  onClick={() => setTheatreMode(!theatreMode)}
-                  className="absolute bottom-12 right-2 bg-black/50 p-2 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  title={theatreMode ? 'Default View' : 'Theatre Mode'}>
-                  {theatreMode ? <ArrowsPointingInIcon className="w-5 h-5"/> : <ArrowsPointingOutIcon className="w-5 h-5"/>}
-                </button>
+            <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-lg relative group">
+                {isPremiere ? <PremiereCountdown premiereTime={video.premiereTime!} /> : (
+                    <ReactPlayer 
+                        ref={playerRef}
+                        url={video.videoUrl} 
+                        controls 
+                        playing={!isAdPlaying}
+                        width="100%" 
+                        height="100%" 
+                        light={video.thumbnailUrl} />
+                )}
+                {!isPremiere && (
+                    <button 
+                      onClick={() => setTheatreMode(!theatreMode)}
+                      className="absolute bottom-12 right-2 bg-black/50 p-2 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      title={theatreMode ? 'Default View' : 'Theatre Mode'}>
+                      {theatreMode ? <ArrowsPointingInIcon className="w-5 h-5"/> : <ArrowsPointingOutIcon className="w-5 h-5"/>}
+                    </button>
+                )}
             </div>
         )}
         <div className="mt-4">
@@ -209,15 +200,19 @@ const Watch: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 gap-4">
             <div className="flex items-center gap-4">
               <Link to={`/channel/${channel.id}`}>
-                <img src={channel.avatarUrl} alt={channel.name} className="w-12 h-12 rounded-full" />
+                <Avatar user={channel} size="md" />
               </Link>
               <div>
                 <Link to={`/channel/${channel.id}`} className="font-semibold text-lg hover:text-brand-red">{channel.name}</Link>
                 <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">{channel.subscribers.toLocaleString()} subscribers</p>
               </div>
               <button 
+                className={`font-semibold px-4 py-2 rounded-full ml-2 hover:opacity-90 transition-colors bg-light-surface dark:bg-dark-surface`}>
+                Join
+              </button>
+              <button 
                 onClick={handleSubscribe}
-                className={`font-semibold px-4 py-2 rounded-full ml-4 hover:opacity-90 transition-colors ${
+                className={`font-semibold px-4 py-2 rounded-full hover:opacity-90 transition-colors ${
                     isSubscribed
                       ? 'bg-light-element dark:bg-dark-element text-light-text-secondary dark:text-dark-text-secondary'
                       : 'bg-light-text-primary dark:bg-dark-text-primary text-light-bg dark:text-dark-bg'
@@ -230,6 +225,10 @@ const Watch: React.FC = () => {
                 <HandThumbUpIcon className="w-5 h-5"/>
                 <span className="text-sm font-semibold">{video.likes.toLocaleString()}</span>
               </button>
+              <button onClick={() => {}} className="flex items-center gap-2 px-4 py-1.5 bg-light-element dark:bg-dark-element hover:bg-light-element/80 dark:hover:bg-dark-surface rounded-full transition-colors">
+                <HeartIcon className="w-5 h-5"/>
+                <span className="text-sm font-semibold">Super Thanks</span>
+              </button>
               <button onClick={() => setIsPlaylistModalOpen(true)} className="flex items-center gap-2 px-4 py-1.5 bg-light-element dark:bg-dark-element hover:bg-light-element/80 dark:hover:bg-dark-surface rounded-full transition-colors">
                 <FolderPlusIcon className="w-5 h-5" />
                 <span className="text-sm font-semibold">Save</span>
@@ -237,10 +236,6 @@ const Watch: React.FC = () => {
                <button onClick={handleDownloadToggle} className="flex items-center gap-2 px-4 py-1.5 bg-light-element dark:bg-dark-element hover:bg-light-element/80 dark:hover:bg-dark-surface rounded-full transition-colors">
                 <ArrowDownTrayIcon className="w-5 h-5" />
                 <span className="text-sm font-semibold">{isDownloaded ? 'Downloaded' : 'Download'}</span>
-              </button>
-               <button className="flex items-center gap-2 px-4 py-1.5 bg-light-element dark:bg-dark-element hover:bg-light-element/80 dark:hover:bg-dark-surface rounded-full ml-2">
-                <ShareIcon className="w-5 h-5"/>
-                <span className="text-sm">Share</span>
               </button>
             </div>
           </div>
@@ -251,37 +246,14 @@ const Watch: React.FC = () => {
         </div>
 
         {/* Comments Section */}
-        {!video.isLive && (
+        {(!video.isLive && !isPremiere) && (
             <div className="mt-6">
-                <h2 className="text-xl font-bold mb-4">{comments.length} Comments</h2>
-                {currentUser && (
-                    <form onSubmit={handleCommentSubmit} className="flex items-start gap-4 mb-6">
-                        <img src={currentUser.avatarUrl} alt="Your avatar" className="w-10 h-10 rounded-full"/>
-                        <div className="flex-grow">
-                            <input
-                                type="text"
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                                placeholder="Add a comment..."
-                                className="w-full bg-transparent border-b-2 border-light-element dark:border-dark-element focus:border-brand-red outline-none pb-1 transition-colors"
-                            />
-                            {newComment && (
-                            <div className="flex justify-end gap-2 mt-2">
-                                <button type="button" onClick={() => setNewComment('')} className="px-4 py-1.5 text-sm rounded-full hover:bg-light-element dark:hover:bg-dark-element">Cancel</button>
-                                <button type="submit" className="px-4 py-1.5 text-sm rounded-full bg-brand-red hover:bg-brand-red-dark disabled:opacity-50" disabled={!newComment.trim()}>Comment</button>
-                            </div>
-                            )}
-                        </div>
-                    </form>
-                )}
-                <div className="space-y-6">
-                    {comments.map(comment => <Comment key={comment.id} comment={comment}/>)}
-                </div>
+                <CommentThread videoId={video.id} comments={comments} setComments={setComments} />
             </div>
         )}
       </div>
       <div className={`${theatreMode ? 'w-full mt-8' : 'lg:w-1/3'}`}>
-        {video.isLive ? <LiveChat videoId={video.id}/> : (
+        {video.isLive || (video.premiereTime && new Date(video.premiereTime) < new Date()) ? <LiveChat videoId={video.id}/> : (
             <>
                 <h2 className="text-xl font-semibold mb-4 text-light-text-primary dark:text-dark-text-primary">Up next</h2>
                 <div className="flex flex-col gap-4">

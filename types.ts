@@ -61,6 +61,7 @@ export interface Video {
   description: string;
   genre: string;
   likes: number;
+  premiereTime?: string; // ISO String
 }
 
 export interface Short {
@@ -91,6 +92,11 @@ export interface Comment {
     };
     text: string;
     timestamp: string;
+    parentId?: string | null;
+    replies?: Comment[];
+    replyCount?: number;
+    isSuperThanks?: boolean;
+    superThanksAmount?: number;
 }
 
 export interface PollOption {
@@ -165,6 +171,8 @@ export interface MonetizationData {
     subscribers: { current: number; required: number };
     watchHours: { current: number; required: number };
     estimatedEarnings: { month: string; earnings: number }[];
+    superThanksRevenue: number;
+    membershipRevenue: number;
 }
 
 
@@ -176,4 +184,34 @@ export interface LiveChatMessage {
         isMod?: boolean;
     };
     message: string;
+}
+
+export interface MembershipTier {
+    id: string;
+    channelId: string;
+    name: string;
+    price: number;
+    perks: string[];
+}
+
+export interface Transaction {
+    id: string;
+    type: 'SUPER_THANKS' | 'MEMBERSHIP';
+    amount: number;
+    fromUserId: string;
+    toUserId: string; // The creator
+    videoId?: string;
+    tierId?: string;
+    timestamp: string; // ISO String
+}
+
+export interface Ad {
+    id: string;
+    videoUrl: string;
+    duration: number; // in seconds
+}
+
+export interface Premiere {
+    videoId: string;
+    premiereTime: string; // ISO String
 }

@@ -2,10 +2,10 @@ import React, { useState, useContext, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { clearCache, fetchWithCache } from '../utils/api';
-import type { Video, Playlist, ChannelLayoutShelf } from '../types';
+import type { Video, Playlist, ChannelLayoutShelf, MembershipTier } from '../types';
 import Avatar from '../components/Avatar';
 import { v4 as uuidv4 } from 'uuid';
-import { TrashIcon, Bars3Icon } from '@heroicons/react/24/solid';
+import { TrashIcon, Bars3Icon, PlusIcon } from '@heroicons/react/24/solid';
 
 const CustomizeChannel: React.FC = () => {
     const { currentUser, updateCurrentUser } = useContext(AuthContext);
@@ -20,6 +20,7 @@ const CustomizeChannel: React.FC = () => {
     const [featuredVideoId, setFeaturedVideoId] = useState(currentUser?.featuredVideoId || '');
     const [socialLinks, setSocialLinks] = useState(currentUser?.socialLinks || { twitter: '', instagram: '' });
     const [layout, setLayout] = useState<ChannelLayoutShelf[]>(currentUser?.channelLayout || []);
+    const [membershipTiers, setMembershipTiers] = useState<MembershipTier[]>([]);
     
     // UI State
     const [avatarPreview, setAvatarPreview] = useState(currentUser?.avatarUrl || '');
@@ -32,12 +33,14 @@ const CustomizeChannel: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             if (currentUser) {
-                const [videos, playlists] = await Promise.all([
+                const [videos, playlists, tiers] = await Promise.all([
                     fetchWithCache(`/api/v1/users/${currentUser.id}/videos`),
-                    fetchWithCache(`/api/v1/playlists?userId=${currentUser.id}`)
+                    fetchWithCache(`/api/v1/playlists?userId=${currentUser.id}`),
+                    fetchWithCache(`/api/v1/monetization/${currentUser.id}/memberships`)
                 ]);
                 setUserVideos(videos);
                 setUserPlaylists(playlists);
+                setMembershipTiers(tiers);
             }
         };
         fetchData();
@@ -85,32 +88,42 @@ const CustomizeChannel: React.FC = () => {
         setLoading(true);
         setMessage('');
 
-        const formData = new FormData();
-        formData.append('name', name);
-        formData.append('about', about);
-        formData.append('featuredVideoId', featuredVideoId);
-        formData.append('socialLinks', JSON.stringify(socialLinks));
-        if (avatarFile) formData.append('avatar', avatarFile);
-        if (bannerFile) formData.append('banner', bannerFile);
-        
-        // This is for the layout, which is a separate endpoint
         try {
-            await fetch(`/api/v1/channels/${currentUser.id}/layout`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ layout })
-            });
+             // Combine all promises
+            await Promise.all([
+                // Update Layout
+                fetch(`/api/v1/channels/${currentUser.id}/layout`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ layout })
+                }),
+                // Update Membership Tiers (a bit complex for one call, but for simulation)
+                ...membershipTiers.map(tier => fetch(`/api/v1/monetization/memberships/${tier.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(tier)
+                }))
+            ]);
+
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('about', about);
+            formData.append('featuredVideoId', featuredVideoId);
+            formData.append('socialLinks', JSON.stringify(socialLinks));
+            if (avatarFile) formData.append('avatar', avatarFile);
+            if (bannerFile) formData.append('banner', bannerFile);
 
             const response = await fetch(`/api/v1/users/${currentUser.id}`, {
                 method: 'PUT',
                 body: formData,
             });
-            if (!response.ok) throw new Error('Failed to update channel.');
+            if (!response.ok) throw new Error('Failed to update channel info.');
             
             const updatedUser = await response.json();
             updateCurrentUser(updatedUser);
             clearCache(`/api/v1/users/${currentUser.id}`);
             clearCache(`/api/v1/channels/${currentUser.id}/layout`);
+            clearCache(`/api/v1/monetization/${currentUser.id}/memberships`);
             setMessage('Channel updated successfully!');
             setTimeout(() => navigate('/my-channel'), 1500);
 
@@ -127,7 +140,7 @@ const CustomizeChannel: React.FC = () => {
       <div>
         <h3 className="text-lg font-semibold mb-4">Channel Homepage Layout</h3>
         <div className="space-y-4 mb-6">
-          {layout.map((shelf, index) => (
+          {layout.map((shelf) => (
             <div key={shelf.id} className="flex items-center gap-4 p-3 bg-light-element dark:bg-dark-element rounded-md">
               <Bars3Icon className="w-5 h-5 cursor-grab" />
               <span className="flex-grow font-medium">{shelf.title}</span>
@@ -185,6 +198,39 @@ const CustomizeChannel: React.FC = () => {
             </div>
         </div>
     );
+    
+    const handleTierChange = (index: number, field: keyof MembershipTier, value: any) => {
+        const newTiers = [...membershipTiers];
+        (newTiers[index] as any)[field] = value;
+        setMembershipTiers(newTiers);
+    };
+
+    const handlePerkChange = (tierIndex: number, perkIndex: number, value: string) => {
+        const newTiers = [...membershipTiers];
+        newTiers[tierIndex].perks[perkIndex] = value;
+        setMembershipTiers(newTiers);
+    };
+
+    const renderMemberships = () => (
+        <div>
+            <h3 className="text-lg font-semibold mb-4">Channel Memberships</h3>
+            <div className="space-y-6">
+                {membershipTiers.map((tier, tierIndex) => (
+                    <div key={tier.id} className="p-4 bg-light-element dark:bg-dark-element rounded-lg">
+                        <input type="text" value={tier.name} onChange={e => handleTierChange(tierIndex, 'name', e.target.value)} placeholder="Tier Name" className="text-xl font-bold bg-transparent w-full mb-2 focus:outline-none focus:ring-1 focus:ring-brand-red rounded px-2" />
+                        <input type="number" value={tier.price} onChange={e => handleTierChange(tierIndex, 'price', parseFloat(e.target.value))} placeholder="Price ($)" className="font-semibold bg-transparent w-full mb-4 focus:outline-none focus:ring-1 focus:ring-brand-red rounded px-2" />
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Perks</label>
+                            {tier.perks.map((perk, perkIndex) => (
+                                <input key={perkIndex} type="text" value={perk} onChange={e => handlePerkChange(tierIndex, perkIndex, e.target.value)} placeholder={`Perk ${perkIndex + 1}`} className="block w-full text-sm px-2 py-1 bg-light-surface dark:bg-dark-surface rounded-md" />
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+
 
     const renderBasicInfo = () => (
         <div className="space-y-6">
@@ -221,6 +267,7 @@ const CustomizeChannel: React.FC = () => {
                 <nav className="-mb-px flex space-x-8">
                     <button onClick={() => setActiveTab('Layout')} className={`${activeTab === 'Layout' ? 'border-brand-red text-brand-red' : 'border-transparent'} py-4 px-1 border-b-2 font-medium`}>Layout</button>
                     <button onClick={() => setActiveTab('Branding')} className={`${activeTab === 'Branding' ? 'border-brand-red text-brand-red' : 'border-transparent'} py-4 px-1 border-b-2 font-medium`}>Branding</button>
+                    <button onClick={() => setActiveTab('Memberships')} className={`${activeTab === 'Memberships' ? 'border-brand-red text-brand-red' : 'border-transparent'} py-4 px-1 border-b-2 font-medium`}>Memberships</button>
                     <button onClick={() => setActiveTab('Basic Info')} className={`${activeTab === 'Basic Info' ? 'border-brand-red text-brand-red' : 'border-transparent'} py-4 px-1 border-b-2 font-medium`}>Basic Info</button>
                 </nav>
             </div>
@@ -228,6 +275,7 @@ const CustomizeChannel: React.FC = () => {
             <div className="bg-light-surface dark:bg-dark-surface p-8 rounded-lg">
                 {activeTab === 'Layout' && renderLayout()}
                 {activeTab === 'Branding' && renderBranding()}
+                {activeTab === 'Memberships' && renderMemberships()}
                 {activeTab === 'Basic Info' && renderBasicInfo()}
             </div>
         </div>

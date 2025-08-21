@@ -1,5 +1,6 @@
 import { db } from '../../../db.js';
 import { v4 as uuidv4 } from 'uuid';
+import { add } from 'date-fns';
 
 export const getAllVideos = (req, res) => {
   const { q } = req.query;
@@ -20,6 +21,11 @@ export const getVideoById = (req, res) => {
   const { id } = req.params;
   const video = db.data.videos.find(v => v.id === id);
   if (video) {
+    // Check for premiere status
+    const premiere = db.data.premieres.find(p => p.videoId === id);
+    if (premiere) {
+        video.premiereTime = premiere.premiereTime;
+    }
     res.json(video);
   } else {
     res.status(404).json({ message: 'Video not found' });
@@ -89,4 +95,29 @@ export const uploadVideo = async (req, res) => {
     db.data.videos.unshift(newVideo);
     await db.write();
     res.status(201).json(newVideo);
+};
+
+export const schedulePremiere = async (req, res) => {
+    const { id: videoId } = req.params;
+    const { minutesFromNow } = req.body; // e.g., 5
+
+    const video = db.data.videos.find(v => v.id === videoId);
+    if (!video) {
+        return res.status(404).json({ message: 'Video not found.' });
+    }
+
+    const premiereTime = add(new Date(), { minutes: minutesFromNow });
+    
+    const newPremiere = {
+        videoId,
+        premiereTime: premiereTime.toISOString(),
+    };
+    
+    // Remove existing premiere for this video if it exists
+    db.data.premieres = db.data.premieres.filter(p => p.videoId !== videoId);
+    db.data.premieres.push(newPremiere);
+    
+    await db.write();
+    
+    res.status(201).json({ ...video, premiereTime: newPremiere.premiereTime });
 };

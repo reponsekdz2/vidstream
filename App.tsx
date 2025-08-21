@@ -24,7 +24,9 @@ import CreatorDashboard from './pages/CreatorDashboard';
 import CustomizeChannel from './pages/CustomizeChannel';
 import Monetization from './pages/Monetization';
 import Moderation from './pages/Moderation';
+import Premium from './pages/Premium';
 import { ThemeContext } from './context/ThemeContext';
+import AdPlayer from './components/ads/AdPlayer';
 
 const App: React.FC = () => {
   const { theme } = useContext(ThemeContext);
@@ -57,10 +59,12 @@ const App: React.FC = () => {
             <Route path="/downloads" element={<Downloads />} />
             <Route path="/trending" element={<Trending />} />
             <Route path="/live" element={<Live />} />
+            <Route path="/premium" element={<Premium />} />
           </Routes>
         </main>
       </div>
       <Miniplayer />
+      <AdPlayer />
     </div>
   );
 };

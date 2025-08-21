@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ArrowUpTrayIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
-import type { Video, User, Playlist, CommunityPost as CommunityPostType } from '../types';
+import type { Video, User, Playlist, CommunityPost as CommunityPostType, MembershipTier } from '../types';
 import { fetchWithCache, clearCache } from '../utils/api';
 import VideoCard from '../components/VideoCard';
 import SkeletonCard from '../components/skeletons/SkeletonCard';
@@ -10,6 +10,7 @@ import ReactPlayer from 'react-player/lazy';
 import AboutTab from '../components/AboutTab';
 import VideoCarousel from '../components/VideoCarousel';
 import CommunityPost from '../components/CommunityPost';
+import Avatar from '../components/Avatar';
 
 const MyChannel: React.FC = () => {
   const { currentUser } = useContext(AuthContext);
@@ -19,6 +20,7 @@ const MyChannel: React.FC = () => {
   const [popularVideos, setPopularVideos] = useState<Video[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [communityPosts, setCommunityPosts] = useState<CommunityPostType[]>([]);
+  const [membershipTiers, setMembershipTiers] = useState<MembershipTier[]>([]);
   const [newPostText, setNewPostText] = useState('');
   const [featuredVideo, setFeaturedVideo] = useState<Video | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,18 +30,20 @@ const MyChannel: React.FC = () => {
         if (!currentUser) return;
         setLoading(true);
         try {
-            const [userData, userVideos, userPlaylists, popularVids, posts] = await Promise.all([
+            const [userData, userVideos, userPlaylists, popularVids, posts, tiers] = await Promise.all([
                 fetchWithCache(`/api/v1/users/${currentUser.id}`),
                 fetchWithCache(`/api/v1/users/${currentUser.id}/videos`),
                 fetchWithCache(`/api/v1/playlists?userId=${currentUser.id}`),
                 fetchWithCache(`/api/v1/videos/popular/${currentUser.id}`),
-                fetchWithCache(`/api/v1/channels/${currentUser.id}/community`)
+                fetchWithCache(`/api/v1/channels/${currentUser.id}/community`),
+                fetchWithCache(`/api/v1/monetization/${currentUser.id}/memberships`)
             ]);
             setChannelInfo(userData);
             setVideos(userVideos);
             setPlaylists(userPlaylists);
             setPopularVideos(popularVids);
             setCommunityPosts(posts);
+            setMembershipTiers(tiers);
             
             if(userData.featuredVideoId) {
                 const fVideo = await fetchWithCache(`/api/v1/videos/${userData.featuredVideoId}`);
@@ -81,7 +85,7 @@ const MyChannel: React.FC = () => {
   
   if (!channelInfo) return <div>Loading...</div> // Or a skeleton
 
-  const tabs = ['Home', 'Uploads', 'Community', 'About'];
+  const tabs = ['Home', 'Uploads', 'Community', 'Memberships', 'About'];
 
   const renderContent = () => {
     if (loading) {
@@ -144,6 +148,28 @@ const MyChannel: React.FC = () => {
             </div>
           </div>
         );
+      case 'Memberships':
+        return (
+          <div className="text-center py-10">
+            <h2 className="text-2xl font-bold">Offer exclusive perks with Memberships</h2>
+            <p className="mt-2 text-dark-text-secondary">Your fans can pay a monthly fee to get access to members-only content and features.</p>
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              {membershipTiers.map(tier => (
+                <div key={tier.id} className="border border-dark-element rounded-lg p-6">
+                  <h3 className="text-xl font-bold text-brand-red">{tier.name}</h3>
+                  <p className="text-3xl font-bold my-4">${tier.price}/month</p>
+                  <ul className="text-left space-y-2 text-dark-text-secondary">
+                    {tier.perks.map((perk, i) => <li key={i} className="flex items-start gap-2"><span className="text-brand-red">✔</span> {perk}</li>)}
+                  </ul>
+                </div>
+              ))}
+            </div>
+            {membershipTiers.length === 0 && <p className="mt-6 text-dark-text-secondary">You haven't created any membership tiers yet.</p>}
+             <Link to="/my-channel/customize" className="mt-8 inline-block bg-brand-red text-white font-semibold px-6 py-2 rounded-full">
+                Manage Memberships
+            </Link>
+          </div>
+        );
       case 'About':
         return <AboutTab user={channelInfo} />;
       default:
@@ -163,11 +189,7 @@ const MyChannel: React.FC = () => {
       {/* Channel Info Header */}
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-start -mt-16 gap-4">
-          <img 
-            src={channelInfo.avatarUrl} 
-            alt={channelInfo.name}
-            className="w-32 h-32 rounded-full border-4 border-light-bg dark:border-dark-bg bg-light-bg dark:bg-dark-bg flex-shrink-0"
-          />
+          <Avatar user={channelInfo} size="lg" />
           <div className="w-full mt-16 md:mt-0 pt-2">
             <div className="flex flex-col md:flex-row md:items-end justify-between">
                 <div>
