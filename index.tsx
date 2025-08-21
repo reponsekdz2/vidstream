@@ -4,6 +4,9 @@ import { HashRouter } from 'react-router-dom';
 import App from './App';
 import { MyListProvider } from './context/MyListContext';
 import { AuthProvider } from './context/AuthContext';
+import { PlayerProvider } from './context/PlayerContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { DownloadsProvider } from './context/DownloadsContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -14,11 +17,17 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <HashRouter>
-      <AuthProvider>
-        <MyListProvider>
-          <App />
-        </MyListProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <MyListProvider>
+            <DownloadsProvider>
+              <PlayerProvider>
+                <App />
+              </PlayerProvider>
+            </DownloadsProvider>
+          </MyListProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </HashRouter>
   </React.StrictMode>
 );

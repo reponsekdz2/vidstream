@@ -1,8 +1,9 @@
-import { videos } from '../../../../data/db.js';
-import { users } from '../../../../data/users.js';
+import { db } from '../../../db.js';
+import { v4 as uuidv4 } from 'uuid';
 
 export const getAllVideos = (req, res) => {
   const { q } = req.query;
+  const videos = db.data.videos;
   if (q) {
     const searchQuery = q.toString().toLowerCase();
     const filteredVideos = videos.filter(video => 
@@ -17,7 +18,7 @@ export const getAllVideos = (req, res) => {
 
 export const getVideoById = (req, res) => {
   const { id } = req.params;
-  const video = videos.find(v => v.id === id);
+  const video = db.data.videos.find(v => v.id === id);
   if (video) {
     res.json(video);
   } else {
@@ -25,50 +26,55 @@ export const getVideoById = (req, res) => {
   }
 };
 
-export const likeVideo = (req, res) => {
+export const likeVideo = async (req, res) => {
     const { id } = req.params;
-    const video = videos.find(v => v.id === id);
+    const video = db.data.videos.find(v => v.id === id);
     if (video) {
         video.likes += 1;
+        await db.write();
         res.status(200).json({ likes: video.likes });
     } else {
         res.status(404).json({ message: 'Video not found' });
     }
 };
 
-export const uploadVideo = (req, res) => {
+export const uploadVideo = async (req, res) => {
     const { userId, title, description, videoUrl, thumbnailUrl, genre } = req.body;
     
     if (!userId || !title || !description || !videoUrl || !thumbnailUrl || !genre) {
         return res.status(400).json({ message: 'All fields are required for upload.' });
     }
     
-    const user = users.find(u => u.id === userId);
+    const user = db.data.users.find(u => u.id === userId);
     if (!user) {
         return res.status(404).json({ message: 'Uploading user not found.' });
     }
 
     const newVideo = {
-        id: `vid-${Date.now()}`,
+        id: uuidv4(),
         userId: user.id,
         thumbnailUrl,
         videoUrl,
-        videoPreviewUrl: videoUrl, // Use main video for preview in this mock
+        videoPreviewUrl: videoUrl,
         title,
-        duration: '0:00', // Placeholder
+        duration: '0:00',
         user: {
             id: user.id,
             name: user.name,
             avatarUrl: user.avatarUrl,
-            subscribers: user.subscribers.toLocaleString(),
+            subscribers: user.subscribers,
         },
         views: '0 views',
+        viewCount: 0,
+        commentCount: 0,
+        isLive: false,
         uploadedAt: 'Just now',
         description,
         genre,
         likes: 0,
     };
 
-    videos.unshift(newVideo); // Add to the beginning of the list
+    db.data.videos.unshift(newVideo);
+    await db.write();
     res.status(201).json(newVideo);
 };

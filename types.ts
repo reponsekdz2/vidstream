@@ -20,9 +20,12 @@ export interface Video {
     id: string;
     name: string;
     avatarUrl: string;
-    subscribers: string;
+    subscribers: number;
   };
   views: string;
+  viewCount: number;
+  commentCount: number;
+  isLive: boolean;
   uploadedAt: string;
   description: string;
   genre: string;
@@ -83,4 +86,32 @@ export interface Notification {
     timestamp: string;
     isRead: boolean;
     link: string;
+}
+
+export interface VideoAnalytics {
+    video: Video;
+    viewCount: number;
+    likes: number;
+    commentCount: number;
+    avgWatchDuration: string; // e.g., "3:45"
+}
+
+export interface CreatorAnalytics {
+    totalViews: number;
+    totalSubscribers: number;
+    totalVideos: number;
+    watchTimeHours: number;
+    viewsOverTime: { date: string; views: number }[];
+    subscribersOverTime: { date: string; subscribers: number }[];
+    videoPerformance: VideoAnalytics[];
+}
+
+export interface LiveChatMessage {
+    id: string;
+    user: {
+        name: string;
+        avatarUrl: string;
+        isMod?: boolean;
+    };
+    message: string;
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -17,10 +17,17 @@ import Playlists from './pages/Playlists';
 import PlaylistDetail from './pages/PlaylistDetail';
 import History from './pages/History';
 import Downloads from './pages/Downloads';
+import Miniplayer from './components/Miniplayer';
+import Trending from './pages/Trending';
+import Live from './pages/Live';
+import CreatorDashboard from './pages/CreatorDashboard';
+import { ThemeContext } from './context/ThemeContext';
 
 const App: React.FC = () => {
+  const { theme } = useContext(ThemeContext);
+
   return (
-    <div className="bg-dark-bg text-dark-text-primary min-h-screen flex flex-col">
+    <div className={`${theme} bg-light-bg dark:bg-dark-bg text-light-text-primary dark:text-dark-text-primary min-h-screen flex flex-col`}>
       <Header />
       <div className="flex flex-1 pt-16">
         <Sidebar />
@@ -34,6 +41,7 @@ const App: React.FC = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/my-channel" element={<MyChannel />} />
+            <Route path="/creator-dashboard" element={<CreatorDashboard />} />
             <Route path="/channel/:userId" element={<Channel />} />
             <Route path="/upload" element={<Upload />} />
             <Route path="/settings" element={<Settings />} />
@@ -41,9 +49,12 @@ const App: React.FC = () => {
             <Route path="/playlist/:id" element={<PlaylistDetail />} />
             <Route path="/history" element={<History />} />
             <Route path="/downloads" element={<Downloads />} />
+            <Route path="/trending" element={<Trending />} />
+            <Route path="/live" element={<Live />} />
           </Routes>
         </main>
       </div>
+      <Miniplayer />
     </div>
   );
 };

@@ -1,18 +1,18 @@
-import { playlists } from '../../../../data/playlists.js';
-import { videos } from '../../../../data/db.js';
+import { db } from '../../../db.js';
+import { v4 as uuidv4 } from 'uuid';
 
 export const getUserPlaylists = (req, res) => {
     const { userId } = req.query;
     if (!userId) {
         return res.status(400).json({ message: 'User ID is required.' });
     }
-    const userPlaylists = playlists.filter(p => p.userId === userId);
+    const userPlaylists = db.data.playlists.filter(p => p.userId === userId);
     res.json(userPlaylists);
 };
 
 export const getPlaylistById = (req, res) => {
     const { id } = req.params;
-    const playlist = playlists.find(p => p.id === id);
+    const playlist = db.data.playlists.find(p => p.id === id);
     if (playlist) {
         res.json(playlist);
     } else {
@@ -20,14 +20,14 @@ export const getPlaylistById = (req, res) => {
     }
 };
 
-export const createPlaylist = (req, res) => {
+export const createPlaylist = async (req, res) => {
     const { userId, name, description, initialVideoId } = req.body;
     if (!userId || !name) {
         return res.status(400).json({ message: 'User ID and playlist name are required.' });
     }
     
     const newPlaylist = {
-        id: `pl-${Date.now()}`,
+        id: uuidv4(),
         userId,
         name,
         description: description || '',
@@ -36,26 +36,26 @@ export const createPlaylist = (req, res) => {
     };
     
     if (initialVideoId) {
-        const firstVideo = videos.find(v => v.id === initialVideoId);
+        const firstVideo = db.data.videos.find(v => v.id === initialVideoId);
         if (firstVideo) {
             newPlaylist.thumbnailUrl = firstVideo.thumbnailUrl;
         }
     }
 
-    playlists.push(newPlaylist);
+    db.data.playlists.push(newPlaylist);
+    await db.write();
     res.status(201).json(newPlaylist);
 };
 
-export const toggleVideoInPlaylist = (req, res) => {
+export const toggleVideoInPlaylist = async (req, res) => {
     const { id: playlistId } = req.params;
     const { videoId } = req.body;
 
-    const playlistIndex = playlists.findIndex(p => p.id === playlistId);
-    if (playlistIndex === -1) {
+    const playlist = db.data.playlists.find(p => p.id === playlistId);
+    if (!playlist) {
         return res.status(404).json({ message: 'Playlist not found.' });
     }
     
-    const playlist = playlists[playlistIndex];
     const videoExists = playlist.videoIds.includes(videoId);
 
     if (videoExists) {
@@ -66,11 +66,12 @@ export const toggleVideoInPlaylist = (req, res) => {
 
     // Update thumbnail if necessary
     if (playlist.videoIds.length > 0) {
-        const firstVideo = videos.find(v => v.id === playlist.videoIds[0]);
+        const firstVideo = db.data.videos.find(v => v.id === playlist.videoIds[0]);
         playlist.thumbnailUrl = firstVideo ? firstVideo.thumbnailUrl : '';
     } else {
         playlist.thumbnailUrl = '';
     }
-
+    
+    await db.write();
     res.status(200).json(playlist);
 };

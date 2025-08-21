@@ -1,10 +1,13 @@
 import React, { useState, useContext } from 'react';
 import { Navigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { ThemeContext } from '../context/ThemeContext';
 import Avatar from '../components/Avatar';
+import { SunIcon, MoonIcon } from '@heroicons/react/24/solid';
 
 const Settings: React.FC = () => {
   const { currentUser, updateCurrentUser } = useContext(AuthContext);
+  const { theme, toggleTheme } = useContext(ThemeContext);
   const [name, setName] = useState(currentUser?.name || '');
   const [avatarUrl, setAvatarUrl] = useState(currentUser?.avatarUrl || '');
   const [message, setMessage] = useState('');
@@ -44,17 +47,17 @@ const Settings: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-dark-text-primary">Account Settings</h1>
+      <h1 className="text-3xl font-bold mb-6">Account Settings</h1>
       
-      <div className="bg-dark-surface p-8 rounded-lg">
+      <div className="bg-light-surface dark:bg-dark-surface p-8 rounded-lg">
         <form onSubmit={handleSubmit} className="space-y-6">
             <div className="flex flex-col items-center gap-4">
                 <Avatar user={tempUser} size="lg"/>
-                <p className="text-sm text-dark-text-secondary">Preview</p>
+                <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">Preview</p>
             </div>
 
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-dark-text-secondary">
+            <label htmlFor="name" className="block text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary">
               Display Name
             </label>
             <input
@@ -62,12 +65,12 @@ const Settings: React.FC = () => {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 bg-dark-element border border-dark-element rounded-md"
+              className="mt-1 block w-full px-3 py-2 bg-light-element dark:bg-dark-element border border-light-element dark:border-dark-element rounded-md"
             />
           </div>
           
           <div>
-            <label htmlFor="avatarUrl" className="block text-sm font-medium text-dark-text-secondary">
+            <label htmlFor="avatarUrl" className="block text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary">
               Avatar Image URL
             </label>
             <input
@@ -76,12 +79,12 @@ const Settings: React.FC = () => {
               value={avatarUrl}
               onChange={(e) => setAvatarUrl(e.target.value)}
               placeholder="https://example.com/image.png"
-              className="mt-1 block w-full px-3 py-2 bg-dark-element border border-dark-element rounded-md"
+              className="mt-1 block w-full px-3 py-2 bg-light-element dark:bg-dark-element border border-light-element dark:border-dark-element rounded-md"
             />
           </div>
           
            <div>
-            <label htmlFor="email" className="block text-sm font-medium text-dark-text-secondary">
+            <label htmlFor="email" className="block text-sm font-medium text-light-text-secondary dark:text-dark-text-secondary">
               Email
             </label>
             <input
@@ -89,7 +92,7 @@ const Settings: React.FC = () => {
               type="email"
               value={currentUser.email}
               disabled
-              className="mt-1 block w-full px-3 py-2 bg-dark-element border border-dark-element rounded-md text-gray-400 cursor-not-allowed"
+              className="mt-1 block w-full px-3 py-2 bg-light-element dark:bg-dark-element border border-light-element dark:border-dark-element rounded-md text-gray-400 cursor-not-allowed"
             />
           </div>
 
@@ -105,6 +108,16 @@ const Settings: React.FC = () => {
 
           {message && <p className={`text-center text-sm ${message.startsWith('Error') ? 'text-red-400' : 'text-green-400'}`}>{message}</p>}
         </form>
+      </div>
+
+      <div className="bg-light-surface dark:bg-dark-surface p-8 rounded-lg mt-8">
+        <h2 className="text-xl font-bold mb-4">Appearance</h2>
+        <div className="flex items-center justify-between">
+            <p className="text-light-text-secondary dark:text-dark-text-secondary">Toggle between light and dark mode</p>
+            <button onClick={toggleTheme} className="p-2 rounded-full bg-light-element dark:bg-dark-element">
+                {theme === 'dark' ? <SunIcon className="w-6 h-6 text-yellow-400"/> : <MoonIcon className="w-6 h-6 text-indigo-400" />}
+            </button>
+        </div>
       </div>
     </div>
   );

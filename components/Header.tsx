@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bars3Icon, MagnifyingGlassIcon, VideoCameraIcon, UserCircleIcon, Cog6ToothIcon, ArrowRightStartOnRectangleIcon, BellIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, MagnifyingGlassIcon, VideoCameraIcon, UserCircleIcon, Cog6ToothIcon, ArrowRightStartOnRectangleIcon, BellIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 import useDebounce from '../hooks/useDebounce';
 import type { Video } from '../types';
 import SearchResults from './SearchResults';
@@ -113,7 +113,7 @@ const Header: React.FC = () => {
             </button>
             
             {isMenuOpen && (
-              <div className="absolute top-full right-0 mt-2 w-56 bg-dark-surface rounded-md shadow-lg py-1 z-50">
+              <div className="absolute top-full right-0 mt-2 w-60 bg-dark-surface rounded-md shadow-lg py-1 z-50">
                 <div className="px-4 py-3 border-b border-dark-element flex items-center gap-3">
                   <Avatar user={currentUser} size="sm"/>
                   <div>
@@ -124,6 +124,10 @@ const Header: React.FC = () => {
                 <Link to="/my-channel" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 w-full text-left px-4 py-2 text-sm text-dark-text-primary hover:bg-dark-element">
                   <UserCircleIcon className="w-5 h-5" />
                   My Channel
+                </Link>
+                <Link to="/creator-dashboard" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 w-full text-left px-4 py-2 text-sm text-dark-text-primary hover:bg-dark-element">
+                  <ChartBarIcon className="w-5 h-5" />
+                  Creator Dashboard
                 </Link>
                 <Link to="/settings" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 w-full text-left px-4 py-2 text-sm text-dark-text-primary hover:bg-dark-element">
                   <Cog6ToothIcon className="w-5 h-5" />

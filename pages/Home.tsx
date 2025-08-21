@@ -3,6 +3,7 @@ import type { Video } from '../types';
 import VideoCarousel from '../components/VideoCarousel';
 import SkeletonCarousel from '../components/skeletons/SkeletonCarousel';
 import { fetchWithCache } from '../utils/api';
+import { motion } from 'framer-motion';
 
 const Home: React.FC = () => {
   const [videosByGenre, setVideosByGenre] = useState<Record<string, Video[]>>({});
@@ -11,7 +12,7 @@ const Home: React.FC = () => {
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        const data = await fetchWithCache('/api/videos');
+        const data = await fetchWithCache('/api/v1/videos');
         
         const groupedByGenre = data.reduce((acc: Record<string, Video[]>, video: Video) => {
           const genre = video.genre || 'Uncategorized';
@@ -44,11 +45,16 @@ const Home: React.FC = () => {
   }
 
   return (
-    <div className="py-8 space-y-12">
+    <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="py-8 space-y-12"
+    >
       {Object.entries(videosByGenre).map(([genre, videos]) => (
         <VideoCarousel key={genre} title={genre} videos={videos} />
       ))}
-    </div>
+    </motion.div>
   );
 };
 
