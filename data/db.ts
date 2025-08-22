@@ -1,7 +1,10 @@
 import type { Video, Short } from '../types';
+import { subDays, subHours, subMonths, subWeeks, subYears } from 'date-fns';
 
 // Note: In a real app, this data would come from a database.
 // User IDs are hardcoded to match the users in `data/users.js`.
+
+const now = new Date();
 
 export const videos: Video[] = [
   {
@@ -12,6 +15,7 @@ export const videos: Video[] = [
     videoPreviewUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
     title: 'Exploring the Alps: A Scenic Journey',
     duration: '0:15',
+    durationSeconds: 15,
     user: {
       id: 'user-2',
       name: 'TravelVibes',
@@ -23,6 +27,7 @@ export const videos: Video[] = [
     commentCount: 4500,
     isLive: false,
     uploadedAt: '2 weeks ago',
+    uploadDate: subWeeks(now, 2).toISOString(),
     description: 'Join us on an epic adventure through the Swiss Alps. Breathtaking views, challenging hikes, and unforgettable moments. This is nature at its finest.',
     genre: 'Travel',
     likes: 152000,
@@ -40,6 +45,7 @@ export const videos: Video[] = [
     videoPreviewUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
     title: 'Ultimate Guide to React Hooks in 2024',
     duration: '1:00',
+    durationSeconds: 60,
     user: {
       id: 'user-3',
       name: 'CodeMaster',
@@ -51,6 +57,7 @@ export const videos: Video[] = [
     commentCount: 8200,
     isLive: false,
     uploadedAt: '1 month ago',
+    uploadDate: subMonths(now, 1).toISOString(),
     description: 'Deep dive into React Hooks. We cover useState, useEffect, useContext, and custom hooks with practical examples to level up your development skills.',
     genre: 'Education',
     likes: 98000,
@@ -63,6 +70,7 @@ export const videos: Video[] = [
     videoPreviewUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
     title: 'How to Cook the Perfect Steak',
     duration: '9:56',
+    durationSeconds: 596,
     user: {
       id: 'user-4',
       name: 'GourmetChef',
@@ -74,6 +82,7 @@ export const videos: Video[] = [
     commentCount: 12000,
     isLive: false,
     uploadedAt: '3 days ago',
+    uploadDate: subDays(now, 3).toISOString(),
     description: 'Learn the secrets to cooking a restaurant-quality steak at home. From selecting the cut to the perfect sear, we cover it all.',
     genre: 'Cooking',
     likes: 275000,
@@ -86,6 +95,7 @@ export const videos: Video[] = [
     videoPreviewUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
     title: 'Mindfulness Meditation for Beginners',
     duration: '10:53',
+    durationSeconds: 653,
     user: {
       id: 'user-5',
       name: 'ZenLife',
@@ -97,6 +107,7 @@ export const videos: Video[] = [
     commentCount: 3100,
     isLive: false,
     uploadedAt: '1 week ago',
+    uploadDate: subWeeks(now, 1).toISOString(),
     description: 'A guided 20-minute meditation session to help you find peace and clarity. Perfect for beginners looking to start their mindfulness journey.',
     genre: 'Lifestyle',
     likes: 45000,
@@ -109,6 +120,7 @@ export const videos: Video[] = [
     videoPreviewUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
     title: 'Building a Gaming PC in 2024',
     duration: '0:15',
+    durationSeconds: 15,
     user: {
       id: 'user-6',
       name: 'TechFlow',
@@ -120,6 +132,7 @@ export const videos: Video[] = [
     commentCount: 25000,
     isLive: true,
     uploadedAt: '2 months ago',
+    uploadDate: subMonths(now, 2).toISOString(),
     description: 'A step-by-step guide to building a powerful gaming PC with the latest components. We go over parts selection, assembly, and setup.',
     genre: 'Technology',
     likes: 310000,
@@ -132,6 +145,7 @@ export const videos: Video[] = [
     videoPreviewUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
     title: 'The Rise of AI: Explained',
     duration: '0:15',
+    durationSeconds: 15,
     user: {
       id: 'user-7',
       name: 'FutureProof',
@@ -143,6 +157,7 @@ export const videos: Video[] = [
     commentCount: 95000,
     isLive: false,
     uploadedAt: '3 weeks ago',
+    uploadDate: subWeeks(now, 3).toISOString(),
     description: 'An in-depth documentary exploring the history, present, and future of Artificial Intelligence. What does it mean for humanity?',
     genre: 'Documentary',
     likes: 950000,
@@ -155,6 +170,7 @@ export const videos: Video[] = [
     videoPreviewUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
     title: 'Advanced CSS Animations',
     duration: '0:15',
+    durationSeconds: 15,
     user: {
       id: 'user-3',
       name: 'CodeMaster',
@@ -165,7 +181,8 @@ export const videos: Video[] = [
     viewCount: 750000,
     commentCount: 1500,
     isLive: false,
-    uploadedAt: '1 week ago',
+    uploadedAt: '1 hour ago',
+    uploadDate: subHours(now, 1).toISOString(),
     description: 'Take your web animations to the next level with these advanced CSS techniques.',
     genre: 'Education',
     likes: 62000,
@@ -176,8 +193,9 @@ export const videos: Video[] = [
     thumbnailUrl: 'https://picsum.photos/seed/vid8/1280/720',
     videoUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
     videoPreviewUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
-    title: 'Off-Roading Adventure',
+    title: 'Off-Roading Adventure in a Subaru',
     duration: '2:45',
+    durationSeconds: 165,
     user: {
       id: 'user-2',
       name: 'TravelVibes',
@@ -188,7 +206,8 @@ export const videos: Video[] = [
     viewCount: 1100000,
     commentCount: 2300,
     isLive: false,
-    uploadedAt: '5 days ago',
+    uploadedAt: '1 year ago',
+    uploadDate: subYears(now, 1).toISOString(),
     description: 'Pushing the limits in the great outdoors with some serious off-roading.',
     genre: 'Travel',
     likes: 88000,

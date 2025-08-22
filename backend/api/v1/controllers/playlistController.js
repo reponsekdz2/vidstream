@@ -75,3 +75,23 @@ export const toggleVideoInPlaylist = async (req, res) => {
     await db.write();
     res.status(200).json(playlist);
 };
+
+export const reorderPlaylist = async (req, res) => {
+    const { id: playlistId } = req.params;
+    const { videoIds } = req.body;
+
+    const playlist = db.data.playlists.find(p => p.id === playlistId);
+    if (!playlist) {
+        return res.status(404).json({ message: 'Playlist not found.' });
+    }
+
+    // Basic validation to ensure all video IDs are strings
+    if (!Array.isArray(videoIds) || !videoIds.every(id => typeof id === 'string')) {
+        return res.status(400).json({ message: 'Invalid videoIds format.' });
+    }
+
+    playlist.videoIds = videoIds;
+
+    await db.write();
+    res.status(200).json(playlist);
+};

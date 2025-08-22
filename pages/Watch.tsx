@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import type { Video, Comment as CommentType, User } from '../types';
-import { ShareIcon, FolderPlusIcon, HandThumbUpIcon, ArrowDownTrayIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon, HeartIcon, TicketIcon, PlayIcon, PauseIcon, SpeakerWaveIcon, SpeakerXMarkIcon, EllipsisHorizontalIcon, FlagIcon } from '@heroicons/react/24/solid';
+import { ShareIcon, FolderPlusIcon, HandThumbUpIcon, ArrowDownTrayIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon, HeartIcon, TicketIcon, PlayIcon, PauseIcon, SpeakerWaveIcon, SpeakerXMarkIcon, EllipsisHorizontalIcon, FlagIcon, ListBulletIcon } from '@heroicons/react/24/solid';
 import { AuthContext } from '../context/AuthContext';
 import ReactPlayer from 'react-player/lazy';
 import { fetchWithCache, clearCache } from '../utils/api';
@@ -14,9 +14,11 @@ import CommentThread from '../components/comments/CommentThread';
 import PremiereCountdown from '../components/premiere/PremiereCountdown';
 import Avatar from '../components/Avatar';
 import ReportModal from '../components/ReportModal';
+import QueuePanel from '../components/QueuePanel';
 
 const Watch: React.FC = () => {
   const { id: videoId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [video, setVideo] = useState<Video | null>(null);
   const [channel, setChannel] = useState<User | null>(null);
   const [comments, setComments] = useState<CommentType[]>([]);
@@ -38,7 +40,7 @@ const Watch: React.FC = () => {
 
 
   const { currentUser, login, updateUserSubscriptions } = useContext(AuthContext);
-  const { playVideo, currentVideo } = useContext(PlayerContext);
+  const { playVideo, currentVideo, playNext, addToQueue, queue } = useContext(PlayerContext);
   const { downloads, addToDownloads, removeFromDownloads } = useContext(DownloadsContext);
   const { showAd, isAdPlaying } = useContext(AdContext);
   
@@ -63,7 +65,7 @@ const Watch: React.FC = () => {
 
         const [channelData, commentsData, allVideosData] = await Promise.all([
           fetchWithCache(`/api/v1/users/${videoData.userId}`),
-          fetchWithCache(`/api/v1/videos/${videoId}/comments`),
+          fetchWithCache(`/api/v1/comments/video/${videoData.id}`),
           fetchWithCache('/api/v1/videos')
         ]);
 
@@ -99,7 +101,9 @@ const Watch: React.FC = () => {
         clearTimeout(controlsTimeout.current);
     }
     controlsTimeout.current = window.setTimeout(() => {
-        setShowControls(false);
+        if (playing) {
+            setShowControls(false);
+        }
     }, 3000);
   };
 
@@ -195,6 +199,15 @@ const Watch: React.FC = () => {
     if (!video) return;
     isDownloaded ? removeFromDownloads(video.id) : addToDownloads(video);
   }
+  
+  const handleVideoEnd = () => {
+    const nextVideo = playNext();
+    if (nextVideo) {
+        navigate(`/watch/${nextVideo.id}`);
+    } else {
+        setPlaying(false);
+    }
+  };
 
   const handleSeekMouseDown = () => setSeeking(true);
   const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -252,7 +265,7 @@ const Watch: React.FC = () => {
     <div className={`flex ${theatreMode ? 'flex-col' : 'flex-col lg:flex-row'} gap-6 p-4 sm:p-6 lg:p-8 max-w-screen-2xl mx-auto`}>
       <div className={`${theatreMode ? 'w-full' : 'lg:w-2/3'} flex-grow`}>
         {!isVideoInPlayer && (
-            <div ref={playerWrapperRef} onMouseMove={handleMouseMove} className="aspect-video bg-black rounded-xl overflow-hidden shadow-lg relative group">
+            <div ref={playerWrapperRef} onMouseMove={handleMouseMove} onMouseLeave={() => playing && setShowControls(false)} className="aspect-video bg-black rounded-xl overflow-hidden shadow-lg relative group">
                 {isPremiere ? <PremiereCountdown premiereTime={video.premiereTime!} /> : (
                     <>
                     <ReactPlayer 
@@ -264,6 +277,7 @@ const Watch: React.FC = () => {
                         muted={muted}
                         onProgress={setProgress}
                         onDuration={setDuration}
+                        onEnded={handleVideoEnd}
                         width="100%" 
                         height="100%" 
                         light={video.thumbnailUrl} />
@@ -340,9 +354,9 @@ const Watch: React.FC = () => {
                 <HandThumbUpIcon className="w-5 h-5"/>
                 <span className="text-sm font-semibold">{video.likes.toLocaleString()}</span>
               </button>
-              <button onClick={() => {}} className="flex items-center gap-2 px-4 py-1.5 bg-light-element dark:bg-dark-element hover:bg-light-element/80 dark:hover:bg-dark-surface rounded-full transition-colors">
-                <HeartIcon className="w-5 h-5"/>
-                <span className="text-sm font-semibold">Super Thanks</span>
+              <button onClick={() => addToQueue(video)} className="flex items-center gap-2 px-4 py-1.5 bg-light-element dark:bg-dark-element hover:bg-light-element/80 dark:hover:bg-dark-surface rounded-full transition-colors">
+                <ListBulletIcon className="w-5 h-5"/>
+                <span className="text-sm font-semibold">Add to Queue</span>
               </button>
               <button onClick={() => setIsPlaylistModalOpen(true)} className="flex items-center gap-2 px-4 py-1.5 bg-light-element dark:bg-dark-element hover:bg-light-element/80 dark:hover:bg-dark-surface rounded-full transition-colors">
                 <FolderPlusIcon className="w-5 h-5" />
@@ -402,7 +416,8 @@ const Watch: React.FC = () => {
       <div className={`${theatreMode ? 'w-full mt-8' : 'lg:w-1/3'}`}>
         {video.isLive || (video.premiereTime && new Date(video.premiereTime) < new Date()) ? <LiveChat videoId={video.id}/> : (
             <>
-                <h2 className="text-xl font-semibold mb-4 text-light-text-primary dark:text-dark-text-primary">Up next</h2>
+               {queue.length > 0 && <QueuePanel />}
+                <h2 className="text-xl font-semibold mb-4 mt-8 text-light-text-primary dark:text-dark-text-primary">Up next</h2>
                 <div className="flex flex-col gap-4">
                 {recommendedVideos.map((recVideo) => (
                     <Link to={`/watch/${recVideo.id}`} key={recVideo.id} className="flex gap-3 group hover:bg-light-element dark:hover:bg-dark-element p-2 rounded-lg transition-colors">

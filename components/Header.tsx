@@ -25,7 +25,7 @@ const Header: React.FC = () => {
     const fetchResults = async () => {
       if (debouncedQuery.length > 1) {
         try {
-          const response = await fetch(`/api/v1/videos?q=${debouncedQuery}`);
+          const response = await fetch(`/api/v1/videos?q=${debouncedQuery}&limit=5`);
           const data: Video[] = await response.json();
           setResults(data);
         } catch (error) {
@@ -63,6 +63,14 @@ const Header: React.FC = () => {
     navigate('/');
   }
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (query.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query)}`);
+      setIsSearchFocused(false);
+    }
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 bg-light-surface dark:bg-dark-bg z-50 h-16 flex items-center justify-between px-4 border-b border-light-element dark:border-dark-element">
       <div className="flex items-center gap-4">
@@ -75,7 +83,7 @@ const Header: React.FC = () => {
       </div>
 
       <div ref={searchRef} className="flex-1 flex justify-center px-4 lg:px-16 relative">
-        <div className="w-full max-w-2xl flex">
+        <form onSubmit={handleSearchSubmit} className="w-full max-w-2xl flex">
           <input
             type="text"
             placeholder="Search"
@@ -84,10 +92,10 @@ const Header: React.FC = () => {
             onFocus={() => setIsSearchFocused(true)}
             className="bg-light-bg dark:bg-dark-element border border-light-element dark:border-dark-element rounded-l-full w-full py-2 px-4 placeholder-light-text-secondary dark:placeholder-dark-text-secondary focus:outline-none focus:ring-1 focus:ring-brand-red z-10"
           />
-          <button className="bg-light-element dark:bg-dark-element px-6 rounded-r-full border-y border-r border-light-element dark:border-dark-element hover:bg-gray-200 dark:hover:bg-gray-700">
+          <button type="submit" className="bg-light-element dark:bg-dark-element px-6 rounded-r-full border-y border-r border-light-element dark:border-dark-element hover:bg-gray-200 dark:hover:bg-gray-700">
             <MagnifyingGlassIcon className="w-5 h-5"/>
           </button>
-        </div>
+        </form>
         {isSearchFocused && (query.length > 0) && <SearchResults results={results} query={debouncedQuery} onClear={() => { setQuery(''); setIsSearchFocused(false); }} />}
       </div>
 

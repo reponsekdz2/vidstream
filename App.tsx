@@ -28,6 +28,7 @@ import Premium from './pages/Premium';
 import AdminDashboard from './pages/AdminDashboard';
 import { ThemeContext } from './context/ThemeContext';
 import AdPlayer from './components/ads/AdPlayer';
+import Search from './pages/Search';
 
 const App: React.FC = () => {
   const { theme } = useContext(ThemeContext);
@@ -62,6 +63,7 @@ const App: React.FC = () => {
             <Route path="/live" element={<Live />} />
             <Route path="/premium" element={<Premium />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/search" element={<Search />} />
           </Routes>
         </main>
       </div>

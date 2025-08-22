@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllVideos, getVideoById, likeVideo, uploadVideo, getPopularVideos, schedulePremiere, reportVideo } from '../controllers/videoController.js';
+import { getAllVideos, getVideoById, likeVideo, uploadVideo, getPopularVideos, schedulePremiere, reportVideo, searchVideos } from '../controllers/videoController.js';
 import upload from '../../../middleware/upload.js';
 
 const router = express.Router();
@@ -10,6 +10,7 @@ const videoUploadFields = [
 ];
 
 router.get('/', getAllVideos);
+router.get('/search', searchVideos);
 router.post('/', upload.fields(videoUploadFields), uploadVideo);
 router.get('/popular/:userId', getPopularVideos);
 router.get('/:id', getVideoById);

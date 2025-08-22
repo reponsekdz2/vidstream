@@ -52,7 +52,8 @@ export interface Video {
   videoUrl: string;
   videoPreviewUrl: string;
   title: string;
-  duration: string;
+  duration: string; // "MM:SS"
+  durationSeconds: number;
   user: {
     id: string;
     name: string;
@@ -64,6 +65,7 @@ export interface Video {
   commentCount: number;
   isLive: boolean;
   uploadedAt: string;
+  uploadDate: string; // ISO String
   description: string;
   genre: string;
   likes: number;
@@ -232,4 +234,10 @@ export interface Report {
   timestamp: string; // ISO String
   status: 'pending' | 'resolved';
   contentDetails?: Video | Comment; // To be populated on the backend for admin view
+}
+
+export interface SearchFilters {
+  uploadDate: 'any' | 'hour' | 'today' | 'week' | 'month' | 'year';
+  duration: 'any' | 'short' | 'medium' | 'long';
+  sortBy: 'relevance' | 'date' | 'views';
 }

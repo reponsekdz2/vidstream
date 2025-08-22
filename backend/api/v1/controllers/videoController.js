@@ -1,21 +1,78 @@
 import { db } from '../../../db.js';
 import { v4 as uuidv4 } from 'uuid';
-import { add } from 'date-fns';
+import { add, subHours, subDays, subWeeks, subMonths, subYears, parseISO, isAfter } from 'date-fns';
 
 export const getAllVideos = (req, res) => {
-  const { q } = req.query;
-  const videos = db.data.videos;
+  const { q, limit } = req.query;
+  let videos = [...db.data.videos];
+
   if (q) {
     const searchQuery = q.toString().toLowerCase();
-    const filteredVideos = videos.filter(video => 
+    videos = videos.filter(video => 
       video.title.toLowerCase().includes(searchQuery) ||
       video.user.name.toLowerCase().includes(searchQuery) ||
       video.genre.toLowerCase().includes(searchQuery)
     );
-    return res.json(filteredVideos);
   }
+
+  if (limit) {
+      videos = videos.slice(0, parseInt(limit.toString(), 10));
+  }
+
   res.json(videos);
 };
+
+export const searchVideos = (req, res) => {
+    const { q, uploadDate, duration, sortBy } = req.query;
+    let videos = [...db.data.videos];
+    
+    // 1. Filter by query
+    if (q) {
+        const searchQuery = q.toString().toLowerCase();
+        videos = videos.filter(video => 
+          video.title.toLowerCase().includes(searchQuery) ||
+          video.user.name.toLowerCase().includes(searchQuery) ||
+          video.genre.toLowerCase().includes(searchQuery)
+        );
+    }
+
+    // 2. Filter by upload date
+    if (uploadDate && uploadDate !== 'any') {
+        const now = new Date();
+        let startDate;
+        if (uploadDate === 'hour') startDate = subHours(now, 1);
+        else if (uploadDate === 'today') startDate = subDays(now, 1);
+        else if (uploadDate === 'week') startDate = subWeeks(now, 1);
+        else if (uploadDate === 'month') startDate = subMonths(now, 1);
+        else if (uploadDate === 'year') startDate = subYears(now, 1);
+
+        if (startDate) {
+            videos = videos.filter(video => isAfter(parseISO(video.uploadDate), startDate));
+        }
+    }
+
+    // 3. Filter by duration
+    if (duration && duration !== 'any') {
+        if (duration === 'short') { // Under 4 minutes
+            videos = videos.filter(v => v.durationSeconds < 240);
+        } else if (duration === 'medium') { // 4-20 minutes
+            videos = videos.filter(v => v.durationSeconds >= 240 && v.durationSeconds <= 1200);
+        } else if (duration === 'long') { // Over 20 minutes
+            videos = videos.filter(v => v.durationSeconds > 1200);
+        }
+    }
+
+    // 4. Sort results
+    if (sortBy === 'date') {
+        videos.sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime());
+    } else if (sortBy === 'views') {
+        videos.sort((a, b) => b.viewCount - a.viewCount);
+    }
+    // 'relevance' is the default and is approximated by the initial state
+
+    res.json(videos);
+};
+
 
 export const getVideoById = (req, res) => {
   const { id } = req.params;
@@ -98,6 +155,7 @@ export const uploadVideo = async (req, res) => {
         videoPreviewUrl: videoUrl,
         title,
         duration: '0:00', // This would ideally be extracted from the video file on the backend
+        durationSeconds: 0,
         user: {
             id: user.id,
             name: user.name,
@@ -109,6 +167,7 @@ export const uploadVideo = async (req, res) => {
         commentCount: 0,
         isLive: false,
         uploadedAt: 'Just now',
+        uploadDate: new Date().toISOString(),
         description,
         genre,
         likes: 0,

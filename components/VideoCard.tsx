@@ -1,8 +1,9 @@
-import React, { useContext, useState, useRef } from 'react';
+import React, { useContext, useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import type { Video } from '../types';
-import { PlusIcon, CheckIcon } from '@heroicons/react/24/solid';
+import { PlusIcon, CheckIcon, EllipsisVerticalIcon, ListBulletIcon } from '@heroicons/react/24/solid';
 import { MyListContext } from '../context/MyListContext';
+import { PlayerContext } from '../context/PlayerContext';
 
 interface VideoCardProps {
   video: Video;
@@ -10,9 +11,25 @@ interface VideoCardProps {
 
 const VideoCard: React.FC<VideoCardProps> = ({ video }) => {
   const { list, addToList, removeFromList } = useContext(MyListContext);
+  const { addToQueue } = useContext(PlayerContext);
   const [isHovered, setIsHovered] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const isInList = list.some(item => item.id === video.id);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
 
   const handleToggleList = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -22,6 +39,13 @@ const VideoCard: React.FC<VideoCardProps> = ({ video }) => {
     } else {
       addToList(video);
     }
+  };
+  
+  const handleAddToQueue = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToQueue(video);
+    setIsMenuOpen(false);
   };
 
   const handleMouseEnter = () => {
@@ -33,9 +57,11 @@ const VideoCard: React.FC<VideoCardProps> = ({ video }) => {
 
   const handleMouseLeave = () => {
     setIsHovered(false);
-    if(videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.currentTime = 0;
+    if (!isMenuOpen) {
+      if(videoRef.current) {
+          videoRef.current.pause();
+          videoRef.current.currentTime = 0;
+      }
     }
   };
 
@@ -75,7 +101,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video }) => {
         <Link to={`/channel/${video.user.id}`} className="flex-shrink-0">
             <img src={video.user.avatarUrl} alt={video.user.name} className="w-9 h-9 rounded-full"/>
         </Link>
-        <div>
+        <div className="flex-grow">
             <Link to={`/watch/${video.id}`}>
                 <h3 className="text-base font-semibold text-dark-text-primary leading-snug line-clamp-2 group-hover:text-brand-red">
                     {video.title}
@@ -89,6 +115,19 @@ const VideoCard: React.FC<VideoCardProps> = ({ video }) => {
                     {video.views} &bull; {video.uploadedAt}
                 </p>
             </div>
+        </div>
+        <div ref={menuRef} className="relative">
+            <button onClick={() => setIsMenuOpen(p => !p)} className="opacity-0 group-hover:opacity-100 p-1">
+                <EllipsisVerticalIcon className="w-5 h-5"/>
+            </button>
+            {isMenuOpen && (
+                <div className="absolute top-full right-0 mt-1 w-48 bg-dark-surface rounded-md shadow-lg py-1 z-20 border border-dark-element">
+                    <button onClick={handleAddToQueue} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm hover:bg-dark-element">
+                        <ListBulletIcon className="w-5 h-5"/>
+                        Add to queue
+                    </button>
+                </div>
+            )}
         </div>
       </div>
     </div>
