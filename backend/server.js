@@ -20,6 +20,8 @@ import creatorRoutes from './api/v1/routes/creator.js';
 import monetizationRoutes from './api/v1/routes/monetization.js';
 import premiumRoutes from './api/v1/routes/premium.js';
 import adminRoutes from './api/v1/routes/admin.js';
+import clipRoutes from './api/v1/routes/clips.js';
+import storeRoutes from './api/v1/routes/store.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -52,6 +54,8 @@ app.use('/api/v1/creator', creatorRoutes);
 app.use('/api/v1/monetization', monetizationRoutes);
 app.use('/api/v1/premium', premiumRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/clips', clipRoutes);
+app.use('/api/v1/store', storeRoutes);
 
 
 // A simple catch-all for old, non-versioned routes for graceful degradation

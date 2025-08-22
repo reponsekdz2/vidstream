@@ -1,5 +1,8 @@
 {
   "name": "VidStream - YourTube Clone",
   "description": "A fully functional video streaming application inspired by YouTube, featuring both long-form videos and vertical shorts. Built with React, TypeScript, and Tailwind CSS for a modern, responsive, and aesthetically pleasing user experience.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
 }

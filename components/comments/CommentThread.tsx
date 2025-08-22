@@ -1,8 +1,8 @@
 import React, { useState, useContext } from 'react';
-import { Comment as CommentType, User } from '../../types';
+import { Comment as CommentType } from '../../types';
 import { fetchWithCache, clearCache } from '../../utils/api';
 import { AuthContext } from '../../context/AuthContext';
-import { EllipsisHorizontalIcon, FlagIcon } from '@heroicons/react/24/solid';
+import { EllipsisHorizontalIcon, FlagIcon, HeartIcon } from '@heroicons/react/24/solid';
 
 interface CommentThreadProps {
   videoId: string;
@@ -110,17 +110,32 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, onReportComment }) =
     }
   };
 
+  const isSuper = comment.isSuperThanks;
+  const superThanksColors = [
+    { amount: 20, bg: 'bg-red-500', text: 'text-white' },
+    { amount: 10, bg: 'bg-blue-500', text: 'text-white' },
+    { amount: 5, bg: 'bg-green-500', text: 'text-white' },
+    { amount: 2, bg: 'bg-yellow-400', text: 'text-black' },
+  ];
+  const superThanksStyle = isSuper ? superThanksColors.find(c => comment.superThanksAmount! >= c.amount) : null;
+
+
   return (
-    <div className="flex items-start gap-4 group">
+    <div className={`flex items-start gap-4 group ${isSuper ? 'p-4 rounded-lg ' + superThanksStyle?.bg : ''}`}>
       <img src={comment.user.avatarUrl} alt={comment.user.name} className="w-10 h-10 rounded-full" />
       <div className="flex-grow">
+        {isSuper && (
+            <div className={`font-bold text-sm mb-1 ${superThanksStyle?.text}`}>
+                <HeartIcon className="w-4 h-4 inline-block mr-1"/> Super Thanks: ${comment.superThanksAmount}
+            </div>
+        )}
         <div className="flex items-baseline gap-2">
-          <span className="font-semibold text-sm">{comment.user.name}</span>
-          <span className="text-xs text-dark-text-secondary">{new Date(comment.timestamp).toLocaleDateString()}</span>
+          <span className={`font-semibold text-sm ${isSuper ? superThanksStyle?.text : ''}`}>{comment.user.name}</span>
+          <span className={`text-xs ${isSuper ? (superThanksStyle?.text + ' opacity-80') : 'text-dark-text-secondary'}`}>{new Date(comment.timestamp).toLocaleDateString()}</span>
         </div>
-        <p className="text-dark-text-primary mt-1">{comment.text}</p>
+        <p className={`mt-1 ${isSuper ? superThanksStyle?.text : 'text-dark-text-primary'}`}>{comment.text}</p>
         <div className="flex items-center gap-4 mt-2">
-          <button onClick={() => setIsReplying(!isReplying)} className="text-xs font-semibold text-dark-text-secondary hover:text-dark-text-primary">
+          <button onClick={() => setIsReplying(!isReplying)} className={`text-xs font-semibold ${isSuper ? (superThanksStyle?.text + ' opacity-80') : 'text-dark-text-secondary hover:text-dark-text-primary'}`}>
             REPLY
           </button>
         </div>

@@ -29,6 +29,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import { ThemeContext } from './context/ThemeContext';
 import AdPlayer from './components/ads/AdPlayer';
 import Search from './pages/Search';
+import GoLive from './pages/GoLive';
 
 const App: React.FC = () => {
   const { theme } = useContext(ThemeContext);
@@ -36,9 +37,9 @@ const App: React.FC = () => {
   return (
     <div className={`${theme} bg-light-bg dark:bg-dark-bg text-light-text-primary dark:text-dark-text-primary min-h-screen flex flex-col`}>
       <Header />
-      <div className="flex flex-1 pt-16">
+      <div id="ambient-container" className="flex flex-1 pt-16 relative">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto pl-16 md:pl-64">
+        <main className="flex-1 overflow-y-auto pl-16 md:pl-64 z-10">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/watch/:id" element={<Watch />} />
@@ -54,6 +55,7 @@ const App: React.FC = () => {
             <Route path="/creator-dashboard/moderation" element={<Moderation />} />
             <Route path="/channel/:userId" element={<Channel />} />
             <Route path="/upload" element={<Upload />} />
+            <Route path="/go-live" element={<GoLive />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/playlists" element={<Playlists />} />
             <Route path="/playlist/:id" element={<PlaylistDetail />} />

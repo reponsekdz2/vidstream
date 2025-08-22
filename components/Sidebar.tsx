@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { HomeIcon, BoltIcon, RectangleStackIcon, ClockIcon, FolderIcon, ArrowDownTrayIcon, ListBulletIcon, FireIcon, SignalIcon } from '@heroicons/react/24/solid';
+import { HomeIcon, BoltIcon, RectangleStackIcon, ClockIcon, FolderIcon, ArrowDownTrayIcon, ListBulletIcon, FireIcon, SignalIcon, SparklesIcon } from '@heroicons/react/24/solid';
 
 const Sidebar: React.FC = () => {
   const navLinkClass = ({ isActive }: { isActive: boolean }): string =>
@@ -14,9 +14,9 @@ const Sidebar: React.FC = () => {
     }`;
 
     const mainNavItems = [
-        { to: "/", icon: HomeIcon, label: "Home", smallLabel: "Home" },
-        { to: "/shorts", icon: BoltIcon, label: "Shorts", smallLabel: "Shorts" },
+        { to: "/", icon: SparklesIcon, label: "For You", smallLabel: "For You" },
         { to: "/subscriptions", icon: RectangleStackIcon, label: "Subscriptions", smallLabel: "Subs" },
+        { to: "/shorts", icon: BoltIcon, label: "Shorts", smallLabel: "Shorts" },
     ];
     
     const exploreNavItems = [

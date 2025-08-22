@@ -89,6 +89,18 @@ export const getVideoById = (req, res) => {
   }
 };
 
+export const getTranscript = (req, res) => {
+    const { id } = req.params;
+    const transcript = db.data.transcripts[id] || [];
+    res.json(transcript);
+};
+
+export const getClipsForVideo = (req, res) => {
+    const { id } = req.params;
+    const clips = db.data.clips.filter(c => c.videoId === id);
+    res.json(clips);
+};
+
 export const getPopularVideos = (req, res) => {
   const { userId } = req.params;
   const userVideos = db.data.videos.filter(v => v.userId === userId);
@@ -109,7 +121,7 @@ export const likeVideo = async (req, res) => {
 };
 
 export const uploadVideo = async (req, res) => {
-    const { userId, title, description, genre, chapters: chaptersText } = req.body;
+    const { userId, title, description, genre, chapters: chaptersText, visibility } = req.body;
     const videoFile = req.files?.videoFile?.[0];
     const thumbnailFile = req.files?.thumbnailFile?.[0];
     
@@ -133,7 +145,7 @@ export const uploadVideo = async (req, res) => {
             const match = line.match(/^(\d{1,2}:\d{2}(?::\d{2})?)\s*-\s*(.+)$/);
             if (match) {
                 const timeStr = match[1];
-                const title = match[2].trim();
+                const chapterTitle = match[2].trim();
                 const parts = timeStr.split(':').map(Number);
                 let timeInSeconds = 0;
                 if (parts.length === 3) { // HH:MM:SS
@@ -141,7 +153,7 @@ export const uploadVideo = async (req, res) => {
                 } else { // MM:SS
                     timeInSeconds = parts[0] * 60 + parts[1];
                 }
-                chapters.push({ time: timeInSeconds, title });
+                chapters.push({ time: timeInSeconds, title: chapterTitle });
             }
         }
     }
@@ -151,7 +163,13 @@ export const uploadVideo = async (req, res) => {
         id: uuidv4(),
         userId: user.id,
         thumbnailUrl,
-        videoUrl,
+        sources: {
+            '1080p': videoUrl,
+            '720p': videoUrl,
+            '480p': videoUrl,
+            '360p': videoUrl,
+        },
+        videoUrl, // Default
         videoPreviewUrl: videoUrl,
         title,
         duration: '0:00', // This would ideally be extracted from the video file on the backend
@@ -172,6 +190,7 @@ export const uploadVideo = async (req, res) => {
         genre,
         likes: 0,
         chapters,
+        visibility: visibility || 'public',
     };
 
     db.data.videos.unshift(newVideo);

@@ -1,17 +1,23 @@
-import type { Video, Short } from '../types';
+import type { Video, Short, TranscriptLine, MerchItem } from '../types';
 import { subDays, subHours, subMonths, subWeeks, subYears } from 'date-fns';
-
-// Note: In a real app, this data would come from a database.
-// User IDs are hardcoded to match the users in `data/users.js`.
+import { getMockTranscript } from '../backend/utils/transcriptHelper';
 
 const now = new Date();
+
+const videoSources = {
+  '1080p': 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+  '720p': 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+  '480p': 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+  '360p': 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+};
 
 export const videos: Video[] = [
   {
     id: '1',
     userId: 'user-2',
     thumbnailUrl: 'https://picsum.photos/seed/vid1/1280/720',
-    videoUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+    sources: videoSources,
+    videoUrl: videoSources['1080p'],
     videoPreviewUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
     title: 'Exploring the Alps: A Scenic Journey',
     duration: '0:15',
@@ -31,6 +37,7 @@ export const videos: Video[] = [
     description: 'Join us on an epic adventure through the Swiss Alps. Breathtaking views, challenging hikes, and unforgettable moments. This is nature at its finest.',
     genre: 'Travel',
     likes: 152000,
+    visibility: 'public',
     chapters: [
       { time: 0, title: 'Introduction' },
       { time: 5, title: 'The Ascent' },
@@ -41,7 +48,8 @@ export const videos: Video[] = [
     id: '2',
     userId: 'user-3',
     thumbnailUrl: 'https://picsum.photos/seed/vid2/1280/720',
-    videoUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+    sources: videoSources,
+    videoUrl: videoSources['1080p'],
     videoPreviewUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
     title: 'Ultimate Guide to React Hooks in 2024',
     duration: '1:00',
@@ -61,11 +69,13 @@ export const videos: Video[] = [
     description: 'Deep dive into React Hooks. We cover useState, useEffect, useContext, and custom hooks with practical examples to level up your development skills.',
     genre: 'Education',
     likes: 98000,
+    visibility: 'public',
   },
   {
     id: '3',
     userId: 'user-4',
     thumbnailUrl: 'https://picsum.photos/seed/vid3/1280/720',
+    sources: videoSources,
     videoUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
     videoPreviewUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
     title: 'How to Cook the Perfect Steak',
@@ -86,11 +96,13 @@ export const videos: Video[] = [
     description: 'Learn the secrets to cooking a restaurant-quality steak at home. From selecting the cut to the perfect sear, we cover it all.',
     genre: 'Cooking',
     likes: 275000,
+    visibility: 'public',
   },
   {
     id: '4',
     userId: 'user-5',
     thumbnailUrl: 'https://picsum.photos/seed/vid4/1280/720',
+    sources: videoSources,
     videoUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
     videoPreviewUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
     title: 'Mindfulness Meditation for Beginners',
@@ -111,11 +123,13 @@ export const videos: Video[] = [
     description: 'A guided 20-minute meditation session to help you find peace and clarity. Perfect for beginners looking to start their mindfulness journey.',
     genre: 'Lifestyle',
     likes: 45000,
+    visibility: 'public',
   },
   {
     id: '5',
     userId: 'user-6',
     thumbnailUrl: 'https://picsum.photos/seed/vid5/1280/720',
+    sources: videoSources,
     videoUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
     videoPreviewUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
     title: 'Building a Gaming PC in 2024',
@@ -136,11 +150,13 @@ export const videos: Video[] = [
     description: 'A step-by-step guide to building a powerful gaming PC with the latest components. We go over parts selection, assembly, and setup.',
     genre: 'Technology',
     likes: 310000,
+    visibility: 'public',
   },
   {
     id: '6',
     userId: 'user-7',
     thumbnailUrl: 'https://picsum.photos/seed/vid6/1280/720',
+    sources: videoSources,
     videoUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
     videoPreviewUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
     title: 'The Rise of AI: Explained',
@@ -161,11 +177,13 @@ export const videos: Video[] = [
     description: 'An in-depth documentary exploring the history, present, and future of Artificial Intelligence. What does it mean for humanity?',
     genre: 'Documentary',
     likes: 950000,
+    visibility: 'public',
   },
   {
     id: '7',
     userId: 'user-3',
     thumbnailUrl: 'https://picsum.photos/seed/vid7/1280/720',
+    sources: videoSources,
     videoUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
     videoPreviewUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
     title: 'Advanced CSS Animations',
@@ -186,11 +204,13 @@ export const videos: Video[] = [
     description: 'Take your web animations to the next level with these advanced CSS techniques.',
     genre: 'Education',
     likes: 62000,
+    visibility: 'members-only',
   },
   {
     id: '8',
     userId: 'user-2',
     thumbnailUrl: 'https://picsum.photos/seed/vid8/1280/720',
+    sources: videoSources,
     videoUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
     videoPreviewUrl: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
     title: 'Off-Roading Adventure in a Subaru',
@@ -211,6 +231,7 @@ export const videos: Video[] = [
     description: 'Pushing the limits in the great outdoors with some serious off-roading.',
     genre: 'Travel',
     likes: 88000,
+    visibility: 'public',
   },
 ];
 
@@ -263,4 +284,43 @@ export const shorts: Short[] = [
     likes: '800K',
     comments: '4.2K',
   },
+];
+
+
+export const transcripts: Record<string, TranscriptLine[]> = {
+  '1': getMockTranscript(15),
+  '2': getMockTranscript(60),
+  '3': getMockTranscript(596),
+  '4': getMockTranscript(653),
+  '5': getMockTranscript(15),
+  '6': getMockTranscript(15),
+  '7': getMockTranscript(15),
+  '8': getMockTranscript(165),
+};
+
+export const merch: MerchItem[] = [
+    {
+        id: 'merch-1',
+        channelId: 'user-2',
+        imageUrl: 'https://picsum.photos/seed/merch1/400/400',
+        title: 'TravelVibes "Adventure" Tee',
+        price: 24.99,
+        storeUrl: '#',
+    },
+    {
+        id: 'merch-2',
+        channelId: 'user-2',
+        imageUrl: 'https://picsum.photos/seed/merch2/400/400',
+        title: '"Wanderlust" Water Bottle',
+        price: 18.00,
+        storeUrl: '#',
+    },
+    {
+        id: 'merch-3',
+        channelId: 'user-3',
+        imageUrl: 'https://picsum.photos/seed/merch3/400/400',
+        title: 'CodeMaster "Hello World" Mug',
+        price: 15.99,
+        storeUrl: '#',
+    },
 ];

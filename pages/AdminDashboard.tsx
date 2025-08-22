@@ -210,19 +210,24 @@ const UserManagementTab: React.FC = () => {
 // --- Video Management Tab ---
 const VideoManagementTab: React.FC = () => {
     const [videos, setVideos] = useState<Video[]>([]);
+    const [reports, setReports] = useState<Report[]>([]);
     const [loading, setLoading] = useState(true);
 
      useEffect(() => {
-        fetchVideos();
+        fetchData();
     }, []);
 
-    const fetchVideos = async () => {
+    const fetchData = async () => {
         setLoading(true);
         try {
-            const data = await adminFetch('/api/v1/admin/videos');
-            setVideos(data);
+            const [videoData, reportData] = await Promise.all([
+                 adminFetch('/api/v1/admin/videos'),
+                 adminFetch('/api/v1/admin/reports')
+            ]);
+            setVideos(videoData);
+            setReports(reportData);
         } catch (error) {
-            console.error("Failed to fetch videos", error);
+            console.error("Failed to fetch video data", error);
         } finally {
             setLoading(false);
         }
@@ -238,6 +243,17 @@ const VideoManagementTab: React.FC = () => {
             }
         }
     };
+    
+    const calculateHealth = (video: Video) => {
+        const reportCount = reports.filter(r => r.contentId === video.id).length;
+        const score = (video.likes * 1) + (video.viewCount / 100) - (reportCount * 50);
+
+        if (score > 10000 || (reportCount === 0 && video.likes > 100)) return {label: "Excellent", color: "bg-green-500"};
+        if (score > 1000 && reportCount < 2) return {label: "Good", color: "bg-cyan-500"};
+        if (score < 0 || reportCount >= 5) return {label: "Poor", color: "bg-red-500"};
+        if (reportCount > 0) return {label: "Needs Review", color: "bg-yellow-500"};
+        return {label: "Neutral", color: "bg-gray-500"};
+    };
 
     if (loading) return <div>Loading videos...</div>;
 
@@ -249,12 +265,14 @@ const VideoManagementTab: React.FC = () => {
                         <th className="px-6 py-3">Video</th>
                         <th className="px-6 py-3">Uploader</th>
                         <th className="px-6 py-3">Views</th>
-                        <th className="px-6 py-3">Likes</th>
+                        <th className="px-6 py-3">Content Health</th>
                         <th className="px-6 py-3">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {videos.map(video => (
+                    {videos.map(video => {
+                        const health = calculateHealth(video);
+                        return (
                         <tr key={video.id} className="border-b border-dark-element hover:bg-dark-element/50">
                             <td className="px-6 py-4">
                                <Link to={`/watch/${video.id}`} className="flex items-center gap-3 group">
@@ -264,14 +282,18 @@ const VideoManagementTab: React.FC = () => {
                             </td>
                             <td className="px-6 py-4">{video.user.name}</td>
                             <td className="px-6 py-4">{video.viewCount.toLocaleString()}</td>
-                            <td className="px-6 py-4">{video.likes.toLocaleString()}</td>
+                            <td className="px-6 py-4">
+                                <span className={`px-2 py-1 text-xs font-bold rounded-full text-white ${health.color}`}>
+                                    {health.label}
+                                </span>
+                            </td>
                             <td className="px-6 py-4">
                                 <button onClick={() => handleDelete(video.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-full">
                                     <TrashIcon className="w-5 h-5" />
                                 </button>
                             </td>
                         </tr>
-                    ))}
+                    )})}
                 </tbody>
             </table>
         </div>

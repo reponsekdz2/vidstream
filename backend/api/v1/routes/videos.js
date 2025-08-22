@@ -1,6 +1,6 @@
 import express from 'express';
-import { getAllVideos, getVideoById, likeVideo, uploadVideo, getPopularVideos, schedulePremiere, reportVideo, searchVideos } from '../controllers/videoController.js';
-import upload from '../../../middleware/upload.js';
+import { getAllVideos, getVideoById, likeVideo, uploadVideo, getPopularVideos, schedulePremiere, reportVideo, searchVideos, getTranscript, getClipsForVideo } from '../controllers/videoController.js';
+import upload from '../../middleware/upload.js';
 
 const router = express.Router();
 
@@ -14,6 +14,8 @@ router.get('/search', searchVideos);
 router.post('/', upload.fields(videoUploadFields), uploadVideo);
 router.get('/popular/:userId', getPopularVideos);
 router.get('/:id', getVideoById);
+router.get('/:id/transcript', getTranscript);
+router.get('/:id/clips', getClipsForVideo);
 router.post('/:id/like', likeVideo);
 router.post('/:id/premiere', schedulePremiere);
 router.post('/:id/report', reportVideo);

@@ -75,10 +75,17 @@ export const deleteMembershipTier = async (req, res) => {
 export const subscribeToTier = async (req, res) => {
     const { userId, tierId } = req.body;
     const tier = db.data.membershipTiers.find(t => t.id === tierId);
+    const user = db.data.users.find(u => u.id === userId);
 
-    if (!tier) {
-        return res.status(404).json({ message: 'Membership tier not found.' });
+    if (!tier || !user) {
+        return res.status(404).json({ message: 'Membership tier or user not found.' });
     }
+
+    // Add membership to user
+    user.memberships = user.memberships || [];
+    // Remove any existing membership for this channel before adding the new one
+    user.memberships = user.memberships.filter(m => m.channelId !== tier.channelId);
+    user.memberships.push({ channelId: tier.channelId, tierId: tier.id });
     
     const newTransaction = {
         id: uuidv4(),

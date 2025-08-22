@@ -1,6 +1,6 @@
 import express from 'express';
 import { getUserById, getUserVideos, toggleSubscription, getUserSubscriptions, updateUserProfile, getUserSettings, updateUserSettings } from '../controllers/userController.js';
-import upload from '../../../middleware/upload.js';
+import upload from '../../middleware/upload.js';
 
 const router = express.Router();
 

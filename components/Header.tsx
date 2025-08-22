@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bars3Icon, MagnifyingGlassIcon, VideoCameraIcon, UserCircleIcon, Cog6ToothIcon, ArrowRightStartOnRectangleIcon, BellIcon, ChartBarIcon, CurrencyDollarIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, MagnifyingGlassIcon, VideoCameraIcon, UserCircleIcon, Cog6ToothIcon, ArrowRightStartOnRectangleIcon, BellIcon, ChartBarIcon, CurrencyDollarIcon, ShieldCheckIcon, SignalIcon } from '@heroicons/react/24/outline';
 import useDebounce from '../hooks/useDebounce';
 import type { Video } from '../types';
 import SearchResults from './SearchResults';
@@ -102,9 +102,14 @@ const Header: React.FC = () => {
       <div className="flex items-center gap-2 md:gap-4">
         {currentUser && (
           <>
-            <Link to="/upload" className="p-2 rounded-full hover:bg-light-element dark:hover:bg-dark-element">
-                <VideoCameraIcon className="w-6 h-6" />
-            </Link>
+            <div className="flex items-center gap-2">
+                <Link to="/upload" title="Upload Video" className="p-2 rounded-full hover:bg-light-element dark:hover:bg-dark-element">
+                    <VideoCameraIcon className="w-6 h-6" />
+                </Link>
+                <Link to="/go-live" title="Go Live" className="p-2 rounded-full hover:bg-light-element dark:hover:bg-dark-element">
+                    <SignalIcon className="w-6 h-6" />
+                </Link>
+            </div>
              <div ref={notificationsRef} className="relative">
                 <button onClick={() => setIsNotificationsOpen(prev => !prev)} className="p-2 rounded-full hover:bg-light-element dark:hover:bg-dark-element">
                     <BellIcon className="w-6 h-6" />

@@ -1,7 +1,7 @@
 import React, { useContext, useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import type { Video } from '../types';
-import { PlusIcon, CheckIcon, EllipsisVerticalIcon, ListBulletIcon } from '@heroicons/react/24/solid';
+import { PlusIcon, CheckIcon, EllipsisVerticalIcon, ListBulletIcon, StarIcon } from '@heroicons/react/24/solid';
 import { MyListContext } from '../context/MyListContext';
 import { PlayerContext } from '../context/PlayerContext';
 
@@ -86,6 +86,12 @@ const VideoCard: React.FC<VideoCardProps> = ({ video }) => {
           </div>
           <div className="absolute inset-0 bg-black bg-opacity-10 group-hover:bg-opacity-30 transition-opacity"></div>
         </Link>
+        {video.visibility === 'members-only' && (
+            <div className="absolute top-2 left-2 bg-yellow-500/80 text-black text-xs font-bold px-2 py-1 rounded-md flex items-center gap-1">
+                <StarIcon className="w-3 h-3"/>
+                MEMBERS ONLY
+            </div>
+        )}
         <span className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-1.5 py-0.5 rounded">
           {video.duration}
         </span>

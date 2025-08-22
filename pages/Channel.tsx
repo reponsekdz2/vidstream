@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import type { User, Video, Playlist, CommunityPost as CommunityPostType, MembershipTier } from '../types';
+import type { User, Video, Playlist, CommunityPost as CommunityPostType, MembershipTier, MerchItem } from '../types';
 import { fetchWithCache, clearCache } from '../utils/api';
 import VideoCard from '../components/VideoCard';
 import ReactPlayer from 'react-player/lazy';
@@ -9,6 +9,7 @@ import AboutTab from '../components/AboutTab';
 import VideoCarousel from '../components/VideoCarousel';
 import CommunityPost from '../components/CommunityPost';
 import Avatar from '../components/Avatar';
+import StoreTab from '../components/StoreTab';
 
 const Channel: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -19,6 +20,7 @@ const Channel: React.FC = () => {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [communityPosts, setCommunityPosts] = useState<CommunityPostType[]>([]);
   const [membershipTiers, setMembershipTiers] = useState<MembershipTier[]>([]);
+  const [merch, setMerch] = useState<MerchItem[]>([]);
   const [featuredVideo, setFeaturedVideo] = useState<Video | null>(null);
   const [activeTab, setActiveTab] = useState('Home');
   const [loading, setLoading] = useState(true);
@@ -28,13 +30,14 @@ const Channel: React.FC = () => {
       if (!userId) return;
       setLoading(true);
       try {
-        const [channelData, videosData, playlistsData, popularVids, posts, tiers] = await Promise.all([
+        const [channelData, videosData, playlistsData, popularVids, posts, tiers, merchData] = await Promise.all([
           fetchWithCache(`/api/v1/users/${userId}`),
           fetchWithCache(`/api/v1/users/${userId}/videos`),
           fetchWithCache(`/api/v1/playlists?userId=${userId}`),
           fetchWithCache(`/api/v1/videos/popular/${userId}`),
           fetchWithCache(`/api/v1/channels/${userId}/community`),
-          fetchWithCache(`/api/v1/monetization/${userId}/memberships`)
+          fetchWithCache(`/api/v1/monetization/${userId}/memberships`),
+          fetchWithCache(`/api/v1/store/${userId}`)
         ]);
         setChannel(channelData);
         setVideos(videosData);
@@ -42,6 +45,7 @@ const Channel: React.FC = () => {
         setPopularVideos(popularVids);
         setCommunityPosts(posts);
         setMembershipTiers(tiers);
+        setMerch(merchData);
         
         if (channelData.featuredVideoId) {
             const fVideo = await fetchWithCache(`/api/v1/videos/${channelData.featuredVideoId}`);
@@ -94,7 +98,7 @@ const Channel: React.FC = () => {
     return <div className="p-8 text-center text-light-text-secondary dark:text-dark-text-secondary">Channel not found.</div>;
   }
   
-  const tabs = ['Home', 'Uploads', 'Community', 'Memberships', 'About'];
+  const tabs = ['Home', 'Uploads', 'Community', 'Memberships', 'Store', 'About'];
   
   const renderContent = () => {
     switch (activeTab) {
@@ -153,6 +157,8 @@ const Channel: React.FC = () => {
              {membershipTiers.length === 0 && <p className="mt-6 text-dark-text-secondary">{channel.name} doesn't have memberships enabled yet.</p>}
           </div>
         );
+      case 'Store':
+            return <StoreTab merch={merch} />;
       case 'About':
         return <AboutTab user={channel} />;
       default:
@@ -205,7 +211,7 @@ const Channel: React.FC = () => {
 
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="mt-6 border-b border-light-element dark:border-dark-element">
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+          <nav className="-mb-px flex space-x-8 overflow-x-auto scrollbar-hide" aria-label="Tabs">
             {tabs.map((tab) => (
               <button
                 key={tab}

@@ -9,12 +9,20 @@ export const getCommentsForVideo = (req, res) => {
     const creator = db.data.users.find(u => u.id === video.userId);
     const bannedWords = creator?.bannedWords || [];
 
-    const topLevelComments = db.data.comments
-        .filter(c => c.videoId === videoId && !c.parentId)
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    const allComments = db.data.comments.filter(c => c.videoId === videoId);
+
+    const topLevelComments = allComments
+        .filter(c => !c.parentId)
+        .sort((a, b) => {
+            // Super Thanks comments go first
+            if (a.isSuperThanks && !b.isSuperThanks) return -1;
+            if (!a.isSuperThanks && b.isSuperThanks) return 1;
+            // Then sort by timestamp
+            return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+        });
         
     const commentsWithReplies = topLevelComments.map(comment => {
-        const replyCount = db.data.comments.filter(r => r.parentId === comment.id).length;
+        const replyCount = allComments.filter(r => r.parentId === comment.id).length;
         const hasBannedWord = bannedWords.some(word => comment.text.toLowerCase().includes(word.toLowerCase()));
         if (hasBannedWord) return null; // Filter out comment itself if it has banned words
         return { ...comment, replyCount };
@@ -27,6 +35,37 @@ export const postComment = async (req, res) => {
     const { videoId } = req.params;
     const { userId, text } = req.body;
     return await createComment(req, res, videoId, text, userId, null);
+};
+
+export const postSuperThanksComment = async (req, res) => {
+    const { videoId } = req.params;
+    const { userId, text, amount } = req.body;
+
+    const user = db.data.users.find(u => u.id === userId);
+    const video = db.data.videos.find(v => v.id === videoId);
+    if (!user || !video) return res.status(404).json({ message: 'User or video not found.'});
+
+    const comment = await createComment(req, res, videoId, text, userId, null, true);
+
+    if (comment) {
+        comment.isSuperThanks = true;
+        comment.superThanksAmount = amount;
+
+        const newTransaction = {
+            id: uuidv4(),
+            type: 'SUPER_THANKS',
+            amount,
+            fromUserId: userId,
+            toUserId: video.userId,
+            videoId,
+            timestamp: new Date().toISOString(),
+        };
+        db.data.transactions.push(newTransaction);
+        await db.write();
+
+        res.status(201).json(comment);
+    }
+    // createComment already sent a response, so we just augment the data and save
 };
 
 export const postReply = async (req, res) => {
@@ -72,20 +111,23 @@ export const reportComment = async (req, res) => {
 
 
 // Helper function
-const createComment = async (req, res, videoId, text, userId, parentId) => {
+const createComment = async (req, res, videoId, text, userId, parentId, isSuperThanks = false) => {
      const user = db.data.users.find(u => u.id === userId);
     const video = db.data.videos.find(v => v.id === videoId);
 
     if (!user || !video) {
-        return res.status(404).json({ message: 'User or video not found.' });
+        if (!isSuperThanks) res.status(404).json({ message: 'User or video not found.' });
+        return null;
     }
     if (!text || !text.trim()) {
-        return res.status(400).json({ message: 'Comment text cannot be empty.' });
+        if (!isSuperThanks) res.status(400).json({ message: 'Comment text cannot be empty.' });
+        return null;
     }
 
     const creator = db.data.users.find(u => u.id === video.userId);
     if (creator && creator.blockedUsers?.includes(userId)) {
-        return res.status(403).json({ message: 'You are blocked from commenting on this channel.' });
+        if (!isSuperThanks) res.status(403).json({ message: 'You are blocked from commenting on this channel.' });
+        return null;
     }
 
     const newComment = {
@@ -107,5 +149,8 @@ const createComment = async (req, res, videoId, text, userId, parentId) => {
     }
     await db.write();
     
-    res.status(201).json(newComment);
+    if (!isSuperThanks) {
+        res.status(201).json(newComment);
+    }
+    return newComment; // Return for SuperThanks to augment
 };

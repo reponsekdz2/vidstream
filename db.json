@@ -12,6 +12,7 @@
         "user-3",
         "user-6"
       ],
+      "memberships": [],
       "settings": {
         "notifications": {
           "newUploads": true,
@@ -40,6 +41,7 @@
       "avatarUrl": "https://i.pravatar.cc/150?u=admin@vidstream.com",
       "subscribers": 0,
       "subscriptions": [],
+      "memberships": [],
       "settings": {
         "notifications": {
           "newUploads": true,
@@ -122,5 +124,8 @@
   ],
   "premieres": [],
   "premiumUsers": [],
-  "reports": []
+  "reports": [],
+  "clips": [],
+  "transcripts": {},
+  "merch": []
 }

@@ -33,6 +33,7 @@ export interface User {
   socialLinks?: { [key: string]: string };
   subscribers: number;
   subscriptions: string[];
+  memberships: { channelId: string; tierId: string; }[];
   settings: UserSettings;
   channelLayout: ChannelLayoutShelf[];
   blockedUsers: string[];
@@ -45,11 +46,14 @@ export interface VideoChapter {
     title: string;
 }
 
+export type VideoQuality = '1080p' | '720p' | '480p' | '360p';
+
 export interface Video {
   id: string;
   userId: string;
   thumbnailUrl: string;
-  videoUrl: string;
+  sources: Record<VideoQuality, string>;
+  videoUrl: string; // Default or fallback
   videoPreviewUrl: string;
   title: string;
   duration: string; // "MM:SS"
@@ -71,6 +75,7 @@ export interface Video {
   likes: number;
   premiereTime?: string; // ISO String
   chapters?: VideoChapter[];
+  visibility: 'public' | 'members-only';
 }
 
 export interface Short {
@@ -240,4 +245,32 @@ export interface SearchFilters {
   uploadDate: 'any' | 'hour' | 'today' | 'week' | 'month' | 'year';
   duration: 'any' | 'short' | 'medium' | 'long';
   sortBy: 'relevance' | 'date' | 'views';
+}
+
+export interface Clip {
+  id: string;
+  videoId: string;
+  userId: string;
+  user: {
+    name: string;
+    avatarUrl: string;
+  };
+  startTime: number;
+  endTime: number;
+  title: string;
+  createdAt: string; // ISO String
+}
+
+export interface TranscriptLine {
+    time: number;
+    text: string;
+}
+
+export interface MerchItem {
+    id: string;
+    channelId: string;
+    imageUrl: string;
+    title: string;
+    price: number;
+    storeUrl: string;
 }
