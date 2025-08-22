@@ -1,4 +1,4 @@
-import { db } from '../../db.js';
+import { db } from '../../../db.js';
 
 // Helper to generate time series data
 const generateTimeSeries = (days, startValue, growthFactor) => {

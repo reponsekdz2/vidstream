@@ -1,4 +1,4 @@
-import { db } from '../../db.js';
+import { db } from '../../../db.js';
 
 export const getSiteAnalytics = (req, res) => {
     const totalUsers = db.data.users.length;

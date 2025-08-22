@@ -1,7 +1,7 @@
-import { db } from '../../db.js';
+import { db } from '../../../db.js';
 import { v4 as uuidv4 } from 'uuid';
 import { add, subHours, subDays, subWeeks, subMonths, subYears, parseISO, isAfter } from 'date-fns';
-import { processVideo } from '../../services/ffmpegService.js';
+import { processVideo } from '../../../services/ffmpegService.js';
 import fs from 'fs';
 import path from 'path';
 
