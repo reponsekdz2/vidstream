@@ -1,12 +1,12 @@
 import React, { useState, useContext } from 'react';
-import type { Video } from '../types';
+import type { Video, Comment as CommentType } from '../types';
 import { XMarkIcon, HeartIcon } from '@heroicons/react/24/solid';
 import { AuthContext } from '../context/AuthContext';
 
 interface SuperThanksModalProps {
   video: Video;
   onClose: () => void;
-  onSuccess: (comment: Comment) => void;
+  onSuccess: (comment: CommentType) => void;
 }
 
 const SuperThanksModal: React.FC<SuperThanksModalProps> = ({ video, onClose, onSuccess }) => {

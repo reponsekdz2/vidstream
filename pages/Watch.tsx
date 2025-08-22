@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
-import type { Video, Comment as CommentType, User } from '../types';
-import { ShareIcon, FolderPlusIcon, HandThumbUpIcon, ArrowDownTrayIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon, HeartIcon, TicketIcon, PlayIcon, PauseIcon, SpeakerWaveIcon, SpeakerXMarkIcon, EllipsisHorizontalIcon, FlagIcon, ListBulletIcon } from '@heroicons/react/24/solid';
+import type { Video, Comment as CommentType, User, TranscriptLine, VideoQuality, Clip } from '../types';
+import { ShareIcon, FolderPlusIcon, HandThumbUpIcon, ArrowDownTrayIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon, HeartIcon, TicketIcon, PlayIcon, PauseIcon, SpeakerWaveIcon, SpeakerXMarkIcon, EllipsisHorizontalIcon, FlagIcon, ListBulletIcon, Cog6ToothIcon, ScissorsIcon, BackwardIcon, ForwardIcon } from '@heroicons/react/24/solid';
 import { AuthContext } from '../context/AuthContext';
 import ReactPlayer from 'react-player/lazy';
 import { fetchWithCache, clearCache } from '../utils/api';
@@ -15,6 +15,10 @@ import PremiereCountdown from '../components/premiere/PremiereCountdown';
 import Avatar from '../components/Avatar';
 import ReportModal from '../components/ReportModal';
 import QueuePanel from '../components/QueuePanel';
+import BecomeMemberPrompt from '../components/BecomeMemberPrompt';
+import SuperThanksModal from '../components/SuperThanksModal';
+import VideoTranscript from '../components/VideoTranscript';
+import ClipCreator from '../components/ClipCreator';
 
 const Watch: React.FC = () => {
   const { id: videoId } = useParams<{ id: string }>();
@@ -26,8 +30,11 @@ const Watch: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
   const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
+  const [isSuperThanksModalOpen, setIsSuperThanksModalOpen] = useState(false);
+  const [isClipCreatorOpen, setIsClipCreatorOpen] = useState(false);
   const [reportingContent, setReportingContent] = useState<{id: string, type: 'video' | 'comment'} | null>(null);
   const [theatreMode, setTheatreMode] = useState(false);
+  const [activeTab, setActiveTab] = useState('up-next');
 
   // Custom Player State
   const [playing, setPlaying] = useState(true);
@@ -37,7 +44,9 @@ const Watch: React.FC = () => {
   const [duration, setDuration] = useState(0);
   const [seeking, setSeeking] = useState(false);
   const [showControls, setShowControls] = useState(true);
-
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [quality, setQuality] = useState<VideoQuality>('1080p');
 
   const { currentUser, login, updateUserSubscriptions } = useContext(AuthContext);
   const { playVideo, currentVideo, playNext, addToQueue, queue } = useContext(PlayerContext);
@@ -49,12 +58,15 @@ const Watch: React.FC = () => {
   const playerWrapperRef = useRef<HTMLDivElement>(null);
   const controlsTimeout = useRef<number | null>(null);
   const actionsMenuRef = useRef<HTMLDivElement>(null);
+  const ambientCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const isDownloaded = downloads.some(d => d.id === videoId);
   const isSubscribed = currentUser && channel ? currentUser.subscriptions.includes(channel.id) : false;
+  const isMember = currentUser && channel ? currentUser.memberships.some(m => m.channelId === channel.id) : false;
+  const canWatch = video?.visibility === 'public' || (video?.visibility === 'members-only' && isMember);
 
   useEffect(() => {
-    setPlaying(true); // Autoplay on new video load
+    setPlaying(true);
     const fetchVideoData = async () => {
       if (!videoId) return;
       setLoading(true);
@@ -71,10 +83,9 @@ const Watch: React.FC = () => {
 
         setChannel(channelData);
         setComments(commentsData);
-        setRecommendedVideos(allVideosData.filter((v: Video) => v.id !== videoId).slice(0, 10));
-
+        setRecommendedVideos(allVideosData.filter((v: Video) => v.id !== videoId && v.visibility === 'public').slice(0, 10));
+        
         showAd();
-
       } catch (error) {
         console.error("Failed to fetch video data:", error);
         setVideo(null);
@@ -85,149 +96,42 @@ const Watch: React.FC = () => {
     fetchVideoData();
   }, [videoId, playVideo, location.pathname, showAd]);
   
+  // Ambient Mode Effect
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
-        setIsActionsMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    const videoElement = playerRef.current?.getInternalPlayer() as HTMLVideoElement;
+    const canvas = ambientCanvasRef.current;
+    if (!videoElement || !canvas || !playing) return;
+    
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return;
 
+    let animationFrameId: number;
+
+    const draw = () => {
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        animationFrameId = requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    return () => {
+        cancelAnimationFrame(animationFrameId);
+    };
+  }, [playing, video]);
+  
   const handleMouseMove = () => {
     setShowControls(true);
-    if (controlsTimeout.current) {
-        clearTimeout(controlsTimeout.current);
-    }
+    if (controlsTimeout.current) clearTimeout(controlsTimeout.current);
     controlsTimeout.current = window.setTimeout(() => {
-        if (playing) {
-            setShowControls(false);
-        }
+        if (playing) setShowControls(false);
     }, 3000);
   };
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-        const target = e.target as HTMLElement;
-        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
-
-        switch (e.key.toLowerCase()) {
-            case 'f':
-                toggleFullscreen();
-                break;
-            case 'm':
-                 setMuted(prev => !prev);
-                break;
-            case 't':
-                setTheatreMode(prev => !prev);
-                break;
-            case ' ':
-            case 'k':
-                e.preventDefault();
-                setPlaying(p => !p);
-                break;
-            case 'arrowleft':
-                playerRef.current?.seekTo(playerRef.current.getCurrentTime() - 5);
-                break;
-            case 'arrowright':
-                playerRef.current?.seekTo(playerRef.current.getCurrentTime() + 5);
-                break;
-        }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  // Add to history
-  useEffect(() => {
-    if (currentUser && video && !isAdPlaying) {
-      const addToHistory = async () => {
-        try {
-          await fetch(`/api/v1/history`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: currentUser.id, videoId: video.id }),
-          });
-          clearCache(`/api/v1/users/${currentUser.id}/history`);
-        } catch (error) {
-          console.error("Failed to add to history:", error);
-        }
-      };
-      
-      const timer = setTimeout(addToHistory, 5000); // Add to history after 5 seconds of watch time
-      return () => clearTimeout(timer);
-    }
-  }, [currentUser, video, isAdPlaying]);
-
-
-  const handleLike = async () => {
-    if (!video) return;
-    try {
-      await fetch(`/api/v1/videos/${video.id}/like`, { method: 'POST' });
-      setVideo(prev => prev ? { ...prev, likes: prev.likes + 1 } : null);
-      clearCache(`/api/v1/videos/${video.id}`);
-    } catch (err){
-       console.error("Failed to like video", err)
-    }
-  };
-
-  const handleSubscribe = async () => {
-    if (!currentUser) return login("admin@vidstream.com", "password123");
-    if (!channel) return;
-    try {
-        await fetch(`/api/v1/users/subscribe`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: currentUser.id, channelId: channel.id }),
-        });
-        const newSubscriptions = isSubscribed
-            ? currentUser.subscriptions.filter(id => id !== channel.id)
-            : [...currentUser.subscriptions, channel.id];
-        updateUserSubscriptions(newSubscriptions);
-        setChannel(prev => prev ? { ...prev, subscribers: prev.subscribers + (isSubscribed ? -1 : 1) } : null);
-
-        clearCache(`/api/v1/users/${currentUser.id}`);
-        clearCache(`/api/v1/users/${channel.id}`);
-    } catch (error) {
-        console.error("Subscription failed:", error);
-    }
-  };
-
-  const handleDownloadToggle = () => {
-    if (!video) return;
-    isDownloaded ? removeFromDownloads(video.id) : addToDownloads(video);
-  }
   
-  const handleVideoEnd = () => {
-    const nextVideo = playNext();
-    if (nextVideo) {
-        navigate(`/watch/${nextVideo.id}`);
-    } else {
-        setPlaying(false);
-    }
+  const handleSeek = (time: number) => {
+    playerRef.current?.seekTo(time);
+    setPlaying(true);
   };
-
-  const handleSeekMouseDown = () => setSeeking(true);
-  const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setProgress(prev => ({ ...prev, played: parseFloat(e.target.value) }));
-  };
-  const handleSeekMouseUp = (e: React.MouseEvent<HTMLInputElement>) => {
-    setSeeking(false);
-    playerRef.current?.seekTo(parseFloat((e.target as HTMLInputElement).value));
-  };
-  const toggleFullscreen = () => {
-      if (playerWrapperRef.current) {
-        if (!document.fullscreenElement) {
-            playerWrapperRef.current.requestFullscreen().catch(err => {
-              alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
-            });
-        } else {
-            document.exitFullscreen();
-        }
-      }
-  };
+  
   const formatTime = (seconds: number) => {
     if (isNaN(seconds)) return '00:00';
     const date = new Date(seconds * 1000);
@@ -240,205 +144,137 @@ const Watch: React.FC = () => {
     return `${mm}:${ss}`;
   };
 
-  const isVideoInPlayer = currentVideo?.id === videoId;
-
   if (loading) return <WatchSkeleton />;
   if (!video || !channel) return <div className="p-8 text-center text-dark-text-secondary dark:text-dark-text-secondary">Video not found.</div>;
   
   const isPremiere = video.premiereTime && new Date(video.premiereTime) > new Date();
-  
+
   return (
     <>
-    {isPlaylistModalOpen && video && (
-        <PlaylistModal
-            videoToAdd={video}
-            onClose={() => setIsPlaylistModalOpen(false)}
-        />
-    )}
-    {reportingContent && (
-        <ReportModal
-            contentId={reportingContent.id}
-            contentType={reportingContent.type}
-            onClose={() => setReportingContent(null)}
-        />
-    )}
-    <div className={`flex ${theatreMode ? 'flex-col' : 'flex-col lg:flex-row'} gap-6 p-4 sm:p-6 lg:p-8 max-w-screen-2xl mx-auto`}>
-      <div className={`${theatreMode ? 'w-full' : 'lg:w-2/3'} flex-grow`}>
-        {!isVideoInPlayer && (
-            <div ref={playerWrapperRef} onMouseMove={handleMouseMove} onMouseLeave={() => playing && setShowControls(false)} className="aspect-video bg-black rounded-xl overflow-hidden shadow-lg relative group">
-                {isPremiere ? <PremiereCountdown premiereTime={video.premiereTime!} /> : (
-                    <>
-                    <ReactPlayer 
-                        ref={playerRef}
-                        url={video.videoUrl} 
-                        controls={false}
-                        playing={playing && !isAdPlaying}
-                        volume={volume}
-                        muted={muted}
-                        onProgress={setProgress}
-                        onDuration={setDuration}
-                        onEnded={handleVideoEnd}
-                        width="100%" 
-                        height="100%" 
-                        light={video.thumbnailUrl} />
+      {isPlaylistModalOpen && <PlaylistModal videoToAdd={video} onClose={() => setIsPlaylistModalOpen(false)} />}
+      {reportingContent && <ReportModal contentId={reportingContent.id} contentType={reportingContent.type} onClose={() => setReportingContent(null)} />}
+      {isSuperThanksModalOpen && <SuperThanksModal video={video} onClose={() => setIsSuperThanksModalOpen(false)} onSuccess={(newComment) => setComments(prev => [newComment, ...prev])} />}
+      {isClipCreatorOpen && <ClipCreator video={video} onClose={() => setIsClipCreatorOpen(false)} />}
 
-                    <div className={`absolute inset-0 transition-opacity duration-300 ${!playing || showControls ? 'opacity-100' : 'opacity-0'}`}>
-                        {/* Play/Pause overlay button */}
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <button onClick={() => setPlaying(p => !p)} className="bg-black/50 p-4 rounded-full text-white">
-                                {playing ? <PauseIcon className="w-10 h-10"/> : <PlayIcon className="w-10 h-10"/>}
-                            </button>
-                        </div>
-
-                        {/* Controls */}
-                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
-                           <div className="flex items-center gap-4 text-white">
-                               <button onClick={() => setPlaying(p => !p)}>
-                                   {playing ? <PauseIcon className="w-6 h-6"/> : <PlayIcon className="w-6 h-6"/>}
-                               </button>
-                               <div className="flex items-center gap-2">
-                                   <button onClick={() => setMuted(m => !m)}>
-                                       {muted || volume === 0 ? <SpeakerXMarkIcon className="w-6 h-6"/> : <SpeakerWaveIcon className="w-6 h-6"/>}
-                                   </button>
-                                   <input type="range" min={0} max={1} step="any" value={muted ? 0 : volume} onChange={(e) => {setVolume(parseFloat(e.target.value)); setMuted(false);}} className="w-24 h-1 accent-brand-red"/>
-                               </div>
-                               <span className="text-xs">{formatTime(progress.playedSeconds)} / {formatTime(duration)}</span>
-                               <div className="flex-grow mx-2">
-                                   <input type="range" min={0} max={0.999999} step="any" value={progress.played}
-                                   onMouseDown={handleSeekMouseDown}
-                                   onChange={handleSeekChange}
-                                   onMouseUp={handleSeekMouseUp}
-                                   className="w-full h-1 accent-brand-red cursor-pointer" />
-                               </div>
-                               <button 
-                                  onClick={() => setTheatreMode(!theatreMode)}
-                                  className="p-1"
-                                  title={theatreMode ? 'Default View' : 'Theatre Mode'}>
-                                  {theatreMode ? <ArrowsPointingInIcon className="w-5 h-5"/> : <ArrowsPointingOutIcon className="w-5 h-5"/>}
-                                </button>
-                               <button onClick={toggleFullscreen} className="p-1"><ArrowsPointingOutIcon className="w-6 h-6"/></button>
+      <div className={`flex ${theatreMode ? 'flex-col' : 'flex-col lg:flex-row'} gap-6 p-4 sm:p-6 lg:p-8 max-w-screen-2xl mx-auto`}>
+        <div className={`${theatreMode ? 'w-full' : 'lg:w-2/3'} flex-grow`}>
+          <div ref={playerWrapperRef} onMouseMove={handleMouseMove} onMouseLeave={() => playing && setShowControls(false)} className="aspect-video bg-black rounded-xl overflow-hidden shadow-lg relative group">
+            <canvas ref={ambientCanvasRef} className="absolute inset-[-50px] w-[calc(100%+100px)] h-[calc(100%+100px)] blur-2xl opacity-30 z-0" width="32" height="18"></canvas>
+            
+            {isPremiere ? <PremiereCountdown premiereTime={video.premiereTime!} /> : !canWatch ? <BecomeMemberPrompt channel={channel} /> : (
+              <>
+                <ReactPlayer 
+                    ref={playerRef}
+                    url={video.sources[quality]} 
+                    controls={false}
+                    playing={playing && !isAdPlaying}
+                    volume={volume}
+                    muted={muted}
+                    onProgress={setProgress}
+                    onDuration={setDuration}
+                    onEnded={() => playNext() ? navigate(`/watch/${queue[0].id}`) : setPlaying(false)}
+                    width="100%" 
+                    height="100%"
+                    playbackRate={playbackRate}
+                    className="relative z-10"
+                />
+                <div className={`absolute inset-0 z-20 transition-opacity duration-300 ${!playing || showControls ? 'opacity-100' : 'opacity-0'}`}>
+                    <div className="absolute inset-0 flex items-center justify-center" onClick={() => setPlaying(p => !p)}>
+                        {!playing && <button className="bg-black/50 p-4 rounded-full text-white"><PlayIcon className="w-10 h-10"/></button>}
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
+                       <input type="range" min={0} max={0.999999} step="any" value={progress.played}
+                           onMouseDown={() => setSeeking(true)}
+                           onChange={(e) => setProgress(prev => ({ ...prev, played: parseFloat(e.target.value) }))}
+                           onMouseUp={(e) => { setSeeking(false); playerRef.current?.seekTo(parseFloat((e.target as HTMLInputElement).value)); }}
+                           className="w-full h-1 accent-brand-red cursor-pointer absolute bottom-14 left-0 right-0" />
+                       <div className="flex items-center gap-4 text-white">
+                           <button onClick={() => setPlaying(p => !p)}>{playing ? <PauseIcon className="w-6 h-6"/> : <PlayIcon className="w-6 h-6"/>}</button>
+                           <button onClick={() => handleSeek(progress.playedSeconds + 10)}><ForwardIcon className="w-6 h-6"/></button>
+                           <div className="flex items-center gap-2">
+                               <button onClick={() => setMuted(m => !m)}>{muted || volume === 0 ? <SpeakerXMarkIcon className="w-6 h-6"/> : <SpeakerWaveIcon className="w-6 h-6"/>}</button>
                            </div>
-                        </div>
+                           <span className="text-xs">{formatTime(progress.playedSeconds)} / {formatTime(duration)}</span>
+                           <div className="flex-grow"></div>
+                           <div className="relative">
+                               <button onClick={() => setIsSettingsOpen(p => !p)}><Cog6ToothIcon className="w-6 h-6"/></button>
+                               {isSettingsOpen && (
+                                   <div className="absolute bottom-full right-0 mb-2 w-40 bg-black/80 rounded-lg p-2 text-sm">
+                                       <div className="mb-2">
+                                          <label>Speed</label>
+                                          <select value={playbackRate} onChange={e => setPlaybackRate(parseFloat(e.target.value))} className="bg-transparent w-full">
+                                              {[0.5, 1, 1.5, 2].map(s => <option key={s} value={s}>{s}x</option>)}
+                                          </select>
+                                       </div>
+                                       <div>
+                                          <label>Quality</label>
+                                           <select value={quality} onChange={e => setQuality(e.target.value as VideoQuality)} className="bg-transparent w-full">
+                                               {Object.keys(video.sources).map(q => <option key={q} value={q}>{q}</option>)}
+                                           </select>
+                                       </div>
+                                   </div>
+                               )}
+                           </div>
+                           <button onClick={() => (playerRef.current?.getInternalPlayer() as any)?.requestPictureInPicture()}><ArrowsPointingOutIcon className="w-6 h-6"/></button>
+                           <button onClick={() => setTheatreMode(!theatreMode)}>{theatreMode ? <ArrowsPointingInIcon className="w-6 h-6"/> : <ArrowsPointingOutIcon className="w-6 h-6"/>}</button>
+                           <button onClick={() => playerWrapperRef.current?.requestFullscreen()}><ArrowsPointingOutIcon className="w-6 h-6"/></button>
+                       </div>
                     </div>
-                    </>
-                )}
-            </div>
-        )}
-        <div className="mt-4">
-          <h1 className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">{video.title}</h1>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 gap-4">
-            <div className="flex items-center gap-4">
-              <Link to={`/channel/${channel.id}`}>
-                <Avatar user={channel} size="md" />
-              </Link>
-              <div>
-                <Link to={`/channel/${channel.id}`} className="font-semibold text-lg hover:text-brand-red">{channel.name}</Link>
-                <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">{channel.subscribers.toLocaleString()} subscribers</p>
-              </div>
-              <button 
-                className={`font-semibold px-4 py-2 rounded-full ml-2 hover:opacity-90 transition-colors bg-light-surface dark:bg-dark-surface`}>
-                Join
-              </button>
-              <button 
-                onClick={handleSubscribe}
-                className={`font-semibold px-4 py-2 rounded-full hover:opacity-90 transition-colors ${
-                    isSubscribed
-                      ? 'bg-light-element dark:bg-dark-element text-light-text-secondary dark:text-dark-text-secondary'
-                      : 'bg-light-text-primary dark:bg-dark-text-primary text-light-bg dark:text-dark-bg'
-                }`}>
-                {isSubscribed ? 'Subscribed' : 'Subscribe'}
-              </button>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-               <button onClick={handleLike} className="flex items-center gap-2 px-4 py-1.5 bg-light-element dark:bg-dark-element hover:bg-light-element/80 dark:hover:bg-dark-surface rounded-full transition-colors">
-                <HandThumbUpIcon className="w-5 h-5"/>
-                <span className="text-sm font-semibold">{video.likes.toLocaleString()}</span>
-              </button>
-              <button onClick={() => addToQueue(video)} className="flex items-center gap-2 px-4 py-1.5 bg-light-element dark:bg-dark-element hover:bg-light-element/80 dark:hover:bg-dark-surface rounded-full transition-colors">
-                <ListBulletIcon className="w-5 h-5"/>
-                <span className="text-sm font-semibold">Add to Queue</span>
-              </button>
-              <button onClick={() => setIsPlaylistModalOpen(true)} className="flex items-center gap-2 px-4 py-1.5 bg-light-element dark:bg-dark-element hover:bg-light-element/80 dark:hover:bg-dark-surface rounded-full transition-colors">
-                <FolderPlusIcon className="w-5 h-5" />
-                <span className="text-sm font-semibold">Save</span>
-              </button>
-               <button onClick={handleDownloadToggle} className="flex items-center gap-2 px-4 py-1.5 bg-light-element dark:bg-dark-element hover:bg-light-element/80 dark:hover:bg-dark-surface rounded-full transition-colors">
-                <ArrowDownTrayIcon className="w-5 h-5" />
-                <span className="text-sm font-semibold">{isDownloaded ? 'Downloaded' : 'Download'}</span>
-              </button>
-              <div ref={actionsMenuRef} className="relative">
-                <button onClick={() => setIsActionsMenuOpen(p => !p)} className="p-2 bg-light-element dark:bg-dark-element hover:bg-light-element/80 dark:hover:bg-dark-surface rounded-full transition-colors">
-                    <EllipsisHorizontalIcon className="w-5 h-5"/>
-                </button>
-                 {isActionsMenuOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-48 bg-light-surface dark:bg-dark-surface rounded-md shadow-lg py-1 z-20 border border-light-element dark:border-dark-element">
-                        <button onClick={() => { setReportingContent({id: video.id, type: 'video'}); setIsActionsMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm hover:bg-light-element dark:hover:bg-dark-element">
-                            <FlagIcon className="w-5 h-5"/>
-                            Report
-                        </button>
-                    </div>
-                 )}
-              </div>
-            </div>
-          </div>
-          <div className="bg-light-surface dark:bg-dark-surface rounded-xl p-4 mt-4">
-            <p className="font-semibold">{video.views} &bull; {video.uploadedAt}</p>
-            <p className="mt-2 text-sm whitespace-pre-wrap text-light-text-secondary dark:text-dark-text-secondary">{video.description}</p>
-          </div>
-          {/* Chapters Section */}
-          {video.chapters && video.chapters.length > 0 && (
-            <div className="bg-light-surface dark:bg-dark-surface rounded-xl p-4 mt-4">
-                <h3 className="font-semibold text-lg mb-2">Chapters</h3>
-                <div className="space-y-2">
-                    {video.chapters.map((chapter) => (
-                        <button key={chapter.time} onClick={() => playerRef.current?.seekTo(chapter.time)} className="w-full text-left flex items-center gap-4 p-2 rounded-lg hover:bg-light-element dark:hover:bg-dark-element">
-                           <span className="font-mono text-sm text-brand-red">{formatTime(chapter.time)}</span>
-                           <span className="font-semibold">{chapter.title}</span>
-                        </button>
-                    ))}
                 </div>
+              </>
+            )}
+          </div>
+          <div className="mt-4">
+            <h1 className="text-2xl font-bold text-light-text-primary dark:text-dark-text-primary">{video.title}</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 gap-4">
+              <div className="flex items-center gap-4">
+                <Link to={`/channel/${channel.id}`}><Avatar user={channel} size="md" /></Link>
+                <div>
+                  <Link to={`/channel/${channel.id}`} className="font-semibold text-lg hover:text-brand-red">{channel.name}</Link>
+                  <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">{channel.subscribers.toLocaleString()} subscribers</p>
+                </div>
+                <button className={`font-semibold px-4 py-2 rounded-full ml-2 hover:opacity-90 transition-colors bg-light-surface dark:bg-dark-surface`}>Join</button>
+                <button onClick={() => isSubscribed ? {} : {}} className={`font-semibold px-4 py-2 rounded-full hover:opacity-90 transition-colors ${ isSubscribed ? 'bg-light-element dark:bg-dark-element' : 'bg-light-text-primary dark:bg-dark-text-primary text-light-bg dark:text-dark-bg'}`}>
+                  {isSubscribed ? 'Subscribed' : 'Subscribe'}
+                </button>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                 <button onClick={() => {}} className="flex items-center gap-2 px-4 py-1.5 bg-light-element dark:bg-dark-element hover:bg-dark-surface rounded-full"><HandThumbUpIcon className="w-5 h-5"/> {video.likes.toLocaleString()}</button>
+                 <button onClick={() => setIsSuperThanksModalOpen(true)} className="flex items-center gap-2 px-4 py-1.5 bg-light-element dark:bg-dark-element hover:bg-dark-surface rounded-full"><HeartIcon className="w-5 h-5"/> Thanks</button>
+                 <button onClick={() => setIsClipCreatorOpen(true)} className="flex items-center gap-2 px-4 py-1.5 bg-light-element dark:bg-dark-element hover:bg-dark-surface rounded-full"><ScissorsIcon className="w-5 h-5"/> Clip</button>
+                 <button onClick={() => setIsPlaylistModalOpen(true)} className="flex items-center gap-2 px-4 py-1.5 bg-light-element dark:bg-dark-element hover:bg-dark-surface rounded-full"><FolderPlusIcon className="w-5 h-5" /> Save</button>
+                 <button onClick={() => {}} className="flex items-center gap-2 px-4 py-1.5 bg-light-element dark:bg-dark-element hover:bg-dark-surface rounded-full"><ArrowDownTrayIcon className="w-5 h-5" /> {isDownloaded ? 'Downloaded' : 'Download'}</button>
+              </div>
             </div>
+          </div>
+          {(!video.isLive && !isPremiere && canWatch) && <CommentThread videoId={video.id} comments={comments} setComments={setComments} onReportComment={(commentId) => setReportingContent({ id: commentId, type: 'comment' })} />}
+        </div>
+        <div className={`${theatreMode ? 'w-full mt-8' : 'lg:w-1/3'}`}>
+          {video.isLive || (video.premiereTime && new Date(video.premiereTime) < new Date()) ? <LiveChat videoId={video.id}/> : (
+              <>
+                 <div className="flex border-b border-dark-element mb-4">
+                    <button onClick={() => setActiveTab('up-next')} className={`px-4 py-2 ${activeTab === 'up-next' ? 'border-b-2 border-white' : ''}`}>Up Next</button>
+                    <button onClick={() => setActiveTab('transcript')} className={`px-4 py-2 ${activeTab === 'transcript' ? 'border-b-2 border-white' : ''}`}>Transcript</button>
+                 </div>
+                 {activeTab === 'up-next' ? (
+                     <>
+                        {queue.length > 0 && <QueuePanel />}
+                        <div className="flex flex-col gap-4">
+                        {recommendedVideos.map((recVideo) => (
+                            <Link to={`/watch/${recVideo.id}`} key={recVideo.id} className="flex gap-3 group hover:bg-dark-element p-2 rounded-lg">
+                              <div className="w-40 flex-shrink-0 relative"><img src={recVideo.thumbnailUrl} alt={recVideo.title} className="w-full h-auto object-cover rounded-lg" /><span className="absolute bottom-1 right-1 bg-black/75 text-white text-xs px-1.5 py-0.5 rounded">{recVideo.duration}</span></div>
+                              <div><h3 className="text-sm font-semibold leading-snug line-clamp-2 group-hover:text-brand-red">{recVideo.title}</h3><p className="text-xs text-dark-text-secondary mt-1">{recVideo.user.name}</p><p className="text-xs text-dark-text-secondary">{recVideo.views}</p></div>
+                            </Link>
+                        ))}
+                        </div>
+                    </>
+                 ) : (
+                    <VideoTranscript videoId={video.id} currentTime={progress.playedSeconds} onSeek={handleSeek} />
+                 )}
+              </>
           )}
         </div>
-
-        {/* Comments Section */}
-        {(!video.isLive && !isPremiere) && (
-            <div className="mt-6">
-                <CommentThread 
-                    videoId={video.id} 
-                    comments={comments} 
-                    setComments={setComments}
-                    onReportComment={(commentId) => setReportingContent({ id: commentId, type: 'comment' })}
-                />
-            </div>
-        )}
       </div>
-      <div className={`${theatreMode ? 'w-full mt-8' : 'lg:w-1/3'}`}>
-        {video.isLive || (video.premiereTime && new Date(video.premiereTime) < new Date()) ? <LiveChat videoId={video.id}/> : (
-            <>
-               {queue.length > 0 && <QueuePanel />}
-                <h2 className="text-xl font-semibold mb-4 mt-8 text-light-text-primary dark:text-dark-text-primary">Up next</h2>
-                <div className="flex flex-col gap-4">
-                {recommendedVideos.map((recVideo) => (
-                    <Link to={`/watch/${recVideo.id}`} key={recVideo.id} className="flex gap-3 group hover:bg-light-element dark:hover:bg-dark-element p-2 rounded-lg transition-colors">
-                    <div className="w-40 flex-shrink-0 relative">
-                        <img src={recVideo.thumbnailUrl} alt={recVideo.title} className="w-full h-auto object-cover rounded-lg" />
-                        <span className="absolute bottom-1 right-1 bg-black bg-opacity-75 text-white text-xs px-1.5 py-0.5 rounded">
-                        {recVideo.duration}
-                        </span>
-                    </div>
-                    <div>
-                        <h3 className="text-sm font-semibold text-light-text-primary dark:text-dark-text-primary leading-snug line-clamp-2 group-hover:text-brand-red">{recVideo.title}</h3>
-                        <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary mt-1">{recVideo.user.name}</p>
-                        <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">{recVideo.views}</p>
-                    </div>
-                    </Link>
-                ))}
-                </div>
-            </>
-        )}
-      </div>
-    </div>
     </>
   );
 };
@@ -458,11 +294,6 @@ const WatchSkeleton: React.FC = () => (
               </div>
             </div>
             <div className="h-10 bg-light-element dark:bg-dark-element rounded-full w-24"></div>
-          </div>
-          <div className="bg-light-surface dark:bg-dark-surface rounded-xl p-4 mt-4 space-y-3">
-            <div className="h-4 bg-light-element dark:bg-dark-element rounded w-1/4"></div>
-            <div className="h-3 bg-light-element dark:bg-dark-element rounded w-full"></div>
-            <div className="h-3 bg-light-element dark:bg-dark-element rounded w-5/6"></div>
           </div>
         </div>
       </div>

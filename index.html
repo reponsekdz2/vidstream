@@ -15,17 +15,26 @@
               'brand-red': '#E50914',
               'brand-red-dark': '#B81D24',
               // Dark Theme
-              'dark-bg': '#141414',
-              'dark-surface': '#222222',
-              'dark-element': '#383838',
-              'dark-text-primary': '#ffffff',
-              'dark-text-secondary': '#e5e5e5',
+              'dark-bg': '#0F0F0F',
+              'dark-surface': '#1F1F1F',
+              'dark-element': '#2F2F2F',
+              'dark-text-primary': '#F1F1F1',
+              'dark-text-secondary': '#AAAAAA',
               // Light Theme
-              'light-bg': '#F9F9F9',
-              'light-surface': '#FFFFFF',
-              'light-element': '#F0F0F0',
-              'light-text-primary': '#0F0F0F',
+              'light-bg': '#FFFFFF',
+              'light-surface': '#F9F9F9',
+              'light-element': '#E8E8E8',
+              'light-text-primary': '#030303',
               'light-text-secondary': '#606060',
+            },
+            keyframes: {
+              slideIn: {
+                '0%': { transform: 'translateY(100%) scale(0.9)', opacity: '0' },
+                '100%': { transform: 'translateY(0) scale(1)', opacity: '1' },
+              }
+            },
+            animation: {
+              'slide-in': 'slideIn 0.3s ease-out forwards',
             }
           }
         },
@@ -39,7 +48,9 @@
                 }
               }
             })
-          }
+          },
+          require('@tailwindcss/typography'),
+          require('@tailwindcss/forms'),
         ]
       }
     </script>
@@ -65,7 +76,11 @@
     "url": "https://esm.sh/url@^0.11.4",
     "bcryptjs": "https://esm.sh/bcryptjs@^3.0.2",
     "body-parser": "https://esm.sh/body-parser@^2.2.0",
-    "date-fns": "https://esm.sh/date-fns@^3.6.0"
+    "date-fns": "https://esm.sh/date-fns@^3.6.0",
+    "fluent-ffmpeg": "https://esm.sh/fluent-ffmpeg@^2.1.3",
+    "child_process": "https://esm.sh/child_process@0.0.9",
+    "fs": "https://esm.sh/fs@0.0.2",
+    "http": "https://esm.sh/http@^0.0.1-security"
   }
 }
 </script>

@@ -258,5 +258,4 @@ const Upload: React.FC = () => {
     </div>
   );
 };
-
 export default Upload;

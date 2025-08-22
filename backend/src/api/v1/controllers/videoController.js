@@ -1,7 +1,7 @@
-import { db } from '../../../db.js';
+import { db } from '../../db.js';
 import { v4 as uuidv4 } from 'uuid';
 import { add, subHours, subDays, subWeeks, subMonths, subYears, parseISO, isAfter } from 'date-fns';
-import { processVideo, setupHlsStream } from '../../../services/ffmpegService.js';
+import { processVideo } from '../../services/ffmpegService.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -143,7 +143,7 @@ export const likeVideo = async (req, res) => {
     }
 };
 
-export const uploadVideo = async (req, res) => {
+export const uploadVideo = async (req, res, next) => {
     const { userId, title, description, genre, chapters: chaptersText, visibility } = req.body;
     const videoFile = req.files?.videoFile?.[0];
     const transcriptFile = req.files?.transcriptFile?.[0];
@@ -227,6 +227,7 @@ export const uploadVideo = async (req, res) => {
             })
             .catch(err => {
                 console.error(`Failed to process video ${videoId}:`, err);
+                // In a real app, you'd have a mechanism to report this failure.
             });
         
         // Respond immediately to the client
@@ -234,7 +235,8 @@ export const uploadVideo = async (req, res) => {
 
     } catch (err) {
         console.error("Upload failed:", err);
-        res.status(500).json({ message: "Server error during upload."});
+        // Pass to the centralized error handler
+        next(err);
     }
 };
 
