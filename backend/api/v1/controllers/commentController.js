@@ -46,6 +46,30 @@ export const getReplies = (req, res) => {
     res.json(replies);
 };
 
+export const reportComment = async (req, res) => {
+    const { commentId } = req.params;
+    const { reporterId, reason } = req.body;
+
+    if (!reporterId || !reason) {
+        return res.status(400).json({ message: 'Reporter ID and reason are required.' });
+    }
+
+    const newReport = {
+        id: uuidv4(),
+        contentType: 'comment',
+        contentId: commentId,
+        reporterId,
+        reason,
+        timestamp: new Date().toISOString(),
+        status: 'pending',
+    };
+
+    db.data.reports.push(newReport);
+    await db.write();
+
+    res.status(201).json({ message: 'Comment reported successfully.' });
+};
+
 
 // Helper function
 const createComment = async (req, res, videoId, text, userId, parentId) => {

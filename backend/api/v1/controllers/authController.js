@@ -32,6 +32,7 @@ export const registerUser = async (req, res) => {
     channelLayout: [],
     blockedUsers: [],
     bannedWords: [],
+    role: 'USER',
   };
   
   db.data.users.push(newUser);

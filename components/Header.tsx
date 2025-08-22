@@ -138,6 +138,15 @@ const Header: React.FC = () => {
                   Moderation
                 </Link>
                 <div className="my-1 border-t border-light-element dark:border-dark-element"></div>
+                {currentUser.role === 'ADMIN' && (
+                  <>
+                    <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 w-full text-left px-4 py-2 text-sm text-brand-red hover:bg-light-element dark:hover:bg-dark-element">
+                      <ShieldCheckIcon className="w-5 h-5" />
+                      Admin Dashboard
+                    </Link>
+                    <div className="my-1 border-t border-light-element dark:border-dark-element"></div>
+                  </>
+                )}
                 <Link to="/settings" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 w-full text-left px-4 py-2 text-sm hover:bg-light-element dark:hover:bg-dark-element">
                   <Cog6ToothIcon className="w-5 h-5" />
                   Settings

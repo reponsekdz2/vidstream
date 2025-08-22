@@ -26,6 +26,11 @@ export const videos: Video[] = [
     description: 'Join us on an epic adventure through the Swiss Alps. Breathtaking views, challenging hikes, and unforgettable moments. This is nature at its finest.',
     genre: 'Travel',
     likes: 152000,
+    chapters: [
+      { time: 0, title: 'Introduction' },
+      { time: 5, title: 'The Ascent' },
+      { time: 10, title: 'Reaching the Peak' }
+    ]
   },
   {
     id: '2',

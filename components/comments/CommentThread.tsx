@@ -2,14 +2,16 @@ import React, { useState, useContext } from 'react';
 import { Comment as CommentType, User } from '../../types';
 import { fetchWithCache, clearCache } from '../../utils/api';
 import { AuthContext } from '../../context/AuthContext';
+import { EllipsisHorizontalIcon, FlagIcon } from '@heroicons/react/24/solid';
 
 interface CommentThreadProps {
   videoId: string;
   comments: CommentType[];
   setComments: React.Dispatch<React.SetStateAction<CommentType[]>>;
+  onReportComment: (commentId: string) => void;
 }
 
-const CommentThread: React.FC<CommentThreadProps> = ({ videoId, comments, setComments }) => {
+const CommentThread: React.FC<CommentThreadProps> = ({ videoId, comments, setComments, onReportComment }) => {
   const { currentUser } = useContext(AuthContext);
   const [newComment, setNewComment] = useState("");
 
@@ -57,19 +59,25 @@ const CommentThread: React.FC<CommentThreadProps> = ({ videoId, comments, setCom
       )}
       <div className="space-y-6">
         {comments.map(comment => (
-          <CommentItem key={comment.id} comment={comment} />
+          <CommentItem key={comment.id} comment={comment} onReportComment={onReportComment} />
         ))}
       </div>
     </div>
   );
 };
 
-const CommentItem: React.FC<{ comment: CommentType }> = ({ comment }) => {
+interface CommentItemProps {
+    comment: CommentType;
+    onReportComment: (commentId: string) => void;
+}
+
+const CommentItem: React.FC<CommentItemProps> = ({ comment, onReportComment }) => {
   const [showReplies, setShowReplies] = useState(false);
   const [replies, setReplies] = useState<CommentType[]>([]);
   const [isReplying, setIsReplying] = useState(false);
   const { currentUser } = useContext(AuthContext);
   const [newReply, setNewReply] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const fetchReplies = async () => {
     const data = await fetchWithCache(`/api/v1/comments/${comment.id}/replies`);
@@ -103,7 +111,7 @@ const CommentItem: React.FC<{ comment: CommentType }> = ({ comment }) => {
   };
 
   return (
-    <div className="flex items-start gap-4">
+    <div className="flex items-start gap-4 group">
       <img src={comment.user.avatarUrl} alt={comment.user.name} className="w-10 h-10 rounded-full" />
       <div className="flex-grow">
         <div className="flex items-baseline gap-2">
@@ -139,10 +147,22 @@ const CommentItem: React.FC<{ comment: CommentType }> = ({ comment }) => {
         {showReplies && (
           <div className="mt-4 space-y-4 pl-4 border-l-2 border-dark-element">
             {replies.map(reply => (
-              <CommentItem key={reply.id} comment={reply} />
+              <CommentItem key={reply.id} comment={reply} onReportComment={onReportComment} />
             ))}
           </div>
         )}
+      </div>
+       <div className="relative">
+          <button onClick={() => setIsMenuOpen(p => !p)} className="opacity-0 group-hover:opacity-100 p-1 rounded-full hover:bg-dark-element">
+              <EllipsisHorizontalIcon className="w-5 h-5"/>
+          </button>
+          {isMenuOpen && (
+               <div className="absolute top-full right-0 mt-1 w-32 bg-dark-surface rounded-md shadow-lg py-1 z-10 border border-dark-element">
+                    <button onClick={() => { onReportComment(comment.id); setIsMenuOpen(false); }} className="w-full text-left flex items-center gap-2 px-3 py-1 text-sm hover:bg-dark-element">
+                        <FlagIcon className="w-4 h-4"/> Report
+                    </button>
+               </div>
+          )}
       </div>
     </div>
   );

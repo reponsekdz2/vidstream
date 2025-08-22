@@ -25,6 +25,7 @@ import CustomizeChannel from './pages/CustomizeChannel';
 import Monetization from './pages/Monetization';
 import Moderation from './pages/Moderation';
 import Premium from './pages/Premium';
+import AdminDashboard from './pages/AdminDashboard';
 import { ThemeContext } from './context/ThemeContext';
 import AdPlayer from './components/ads/AdPlayer';
 
@@ -60,6 +61,7 @@ const App: React.FC = () => {
             <Route path="/trending" element={<Trending />} />
             <Route path="/live" element={<Live />} />
             <Route path="/premium" element={<Premium />} />
+            <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </main>
       </div>

@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
@@ -20,6 +20,17 @@ const Settings: React.FC = () => {
   const [settings, setSettings] = useState(currentUser.settings);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  const [isDataSaver, setIsDataSaver] = useState(
+      settings.playback.defaultQuality === '480p' && !settings.playback.autoplay
+  );
+
+  useEffect(() => {
+    // Sync data saver state if settings change from another source
+    setIsDataSaver(
+      settings.playback.defaultQuality === '480p' && !settings.playback.autoplay
+    );
+  }, [settings]);
 
   const handleSettingsChange = (category: 'notifications' | 'playback' | 'privacy', key: string, value: any) => {
     setSettings(prev => ({
@@ -29,6 +40,30 @@ const Settings: React.FC = () => {
         [key]: value
       }
     }));
+  };
+  
+  const handleDataSaverToggle = (enabled: boolean) => {
+      setIsDataSaver(enabled);
+      if (enabled) {
+          setSettings(prev => ({
+              ...prev,
+              playback: {
+                  ...prev.playback,
+                  defaultQuality: '480p',
+                  autoplay: false,
+              }
+          }));
+      } else {
+          // Revert to default or previous settings
+          setSettings(prev => ({
+              ...prev,
+              playback: {
+                  ...prev.playback,
+                  defaultQuality: 'Auto',
+                  autoplay: true,
+              }
+          }));
+      }
   };
 
   const handleAccountSubmit = async (e: React.FormEvent) => {
@@ -123,10 +158,17 @@ const Settings: React.FC = () => {
   const renderPlayback = () => (
       <div className="space-y-6">
         <h3 className="text-xl font-bold">Playback Settings</h3>
+         <div className="flex items-center justify-between p-4 bg-light-element/50 dark:bg-dark-element/50 rounded-lg">
+            <div>
+                <label htmlFor="data-saver" className="font-medium">Data Saver Mode</label>
+                <p className="text-xs text-light-text-secondary dark:text-dark-text-secondary">Lowers quality and disables autoplay.</p>
+            </div>
+            <input type="checkbox" id="data-saver" checked={isDataSaver} onChange={e => handleDataSaverToggle(e.target.checked)} className="h-4 w-4 rounded text-brand-red focus:ring-brand-red" />
+        </div>
         <div>
             <label htmlFor="playback-quality" className="block text-sm font-medium">Default Video Quality</label>
-            <select id="playback-quality" value={settings.playback.defaultQuality} onChange={e => handleSettingsChange('playback', 'defaultQuality', e.target.value)}
-             className="mt-1 block w-full px-3 py-2 bg-light-element dark:bg-dark-element border border-light-element dark:border-dark-element rounded-md">
+            <select id="playback-quality" value={settings.playback.defaultQuality} onChange={e => handleSettingsChange('playback', 'defaultQuality', e.target.value)} disabled={isDataSaver}
+             className="mt-1 block w-full px-3 py-2 bg-light-element dark:bg-dark-element border border-light-element dark:border-dark-element rounded-md disabled:opacity-50">
                 <option>Auto</option>
                 <option>1080p</option>
                 <option>720p</option>
@@ -135,7 +177,7 @@ const Settings: React.FC = () => {
         </div>
         <div className="flex items-center justify-between">
             <label htmlFor="playback-autoplay">Autoplay next video</label>
-            <input type="checkbox" id="playback-autoplay" checked={settings.playback.autoplay} onChange={e => handleSettingsChange('playback', 'autoplay', e.target.checked)} className="h-4 w-4 rounded text-brand-red focus:ring-brand-red" />
+            <input type="checkbox" id="playback-autoplay" checked={settings.playback.autoplay} onChange={e => handleSettingsChange('playback', 'autoplay', e.target.checked)} disabled={isDataSaver} className="h-4 w-4 rounded text-brand-red focus:ring-brand-red disabled:opacity-50" />
         </div>
     </div>
   );

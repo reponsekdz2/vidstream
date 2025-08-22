@@ -52,7 +52,7 @@ export const likeVideo = async (req, res) => {
 };
 
 export const uploadVideo = async (req, res) => {
-    const { userId, title, description, genre } = req.body;
+    const { userId, title, description, genre, chapters: chaptersText } = req.body;
     const videoFile = req.files?.videoFile?.[0];
     const thumbnailFile = req.files?.thumbnailFile?.[0];
     
@@ -67,6 +67,28 @@ export const uploadVideo = async (req, res) => {
 
     const videoUrl = `/uploads/${videoFile.filename}`;
     const thumbnailUrl = `/uploads/${thumbnailFile.filename}`;
+
+    const chapters = [];
+    if (chaptersText) {
+        const lines = chaptersText.split('\n').filter(line => line.trim() !== '');
+        for (const line of lines) {
+            // Match timestamps like 00:00, 0:00, 00:00:00, 0:00:00
+            const match = line.match(/^(\d{1,2}:\d{2}(?::\d{2})?)\s*-\s*(.+)$/);
+            if (match) {
+                const timeStr = match[1];
+                const title = match[2].trim();
+                const parts = timeStr.split(':').map(Number);
+                let timeInSeconds = 0;
+                if (parts.length === 3) { // HH:MM:SS
+                    timeInSeconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
+                } else { // MM:SS
+                    timeInSeconds = parts[0] * 60 + parts[1];
+                }
+                chapters.push({ time: timeInSeconds, title });
+            }
+        }
+    }
+
 
     const newVideo = {
         id: uuidv4(),
@@ -90,6 +112,7 @@ export const uploadVideo = async (req, res) => {
         description,
         genre,
         likes: 0,
+        chapters,
     };
 
     db.data.videos.unshift(newVideo);
@@ -120,4 +143,28 @@ export const schedulePremiere = async (req, res) => {
     await db.write();
     
     res.status(201).json({ ...video, premiereTime: newPremiere.premiereTime });
+};
+
+export const reportVideo = async (req, res) => {
+    const { id: videoId } = req.params;
+    const { reporterId, reason } = req.body;
+
+    if (!reporterId || !reason) {
+        return res.status(400).json({ message: 'Reporter ID and reason are required.' });
+    }
+
+    const newReport = {
+        id: uuidv4(),
+        contentType: 'video',
+        contentId: videoId,
+        reporterId,
+        reason,
+        timestamp: new Date().toISOString(),
+        status: 'pending',
+    };
+
+    db.data.reports.push(newReport);
+    await db.write();
+
+    res.status(201).json({ message: 'Video reported successfully.' });
 };

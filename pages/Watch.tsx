@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import type { Video, Comment as CommentType, User } from '../types';
-import { ShareIcon, FolderPlusIcon, HandThumbUpIcon, ArrowDownTrayIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon, HeartIcon, TicketIcon } from '@heroicons/react/24/solid';
+import { ShareIcon, FolderPlusIcon, HandThumbUpIcon, ArrowDownTrayIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon, HeartIcon, TicketIcon, PlayIcon, PauseIcon, SpeakerWaveIcon, SpeakerXMarkIcon, EllipsisHorizontalIcon, FlagIcon } from '@heroicons/react/24/solid';
 import { AuthContext } from '../context/AuthContext';
 import ReactPlayer from 'react-player/lazy';
 import { fetchWithCache, clearCache } from '../utils/api';
@@ -13,6 +13,7 @@ import { AdContext } from '../context/AdContext';
 import CommentThread from '../components/comments/CommentThread';
 import PremiereCountdown from '../components/premiere/PremiereCountdown';
 import Avatar from '../components/Avatar';
+import ReportModal from '../components/ReportModal';
 
 const Watch: React.FC = () => {
   const { id: videoId } = useParams<{ id: string }>();
@@ -22,8 +23,19 @@ const Watch: React.FC = () => {
   const [recommendedVideos, setRecommendedVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
-  const [isSuperThanksOpen, setIsSuperThanksOpen] = useState(false);
+  const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
+  const [reportingContent, setReportingContent] = useState<{id: string, type: 'video' | 'comment'} | null>(null);
   const [theatreMode, setTheatreMode] = useState(false);
+
+  // Custom Player State
+  const [playing, setPlaying] = useState(true);
+  const [volume, setVolume] = useState(0.8);
+  const [muted, setMuted] = useState(false);
+  const [progress, setProgress] = useState({ played: 0, playedSeconds: 0, loaded: 0, loadedSeconds: 0 });
+  const [duration, setDuration] = useState(0);
+  const [seeking, setSeeking] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+
 
   const { currentUser, login, updateUserSubscriptions } = useContext(AuthContext);
   const { playVideo, currentVideo } = useContext(PlayerContext);
@@ -32,11 +44,15 @@ const Watch: React.FC = () => {
   
   const location = useLocation();
   const playerRef = useRef<ReactPlayer>(null);
-  
+  const playerWrapperRef = useRef<HTMLDivElement>(null);
+  const controlsTimeout = useRef<number | null>(null);
+  const actionsMenuRef = useRef<HTMLDivElement>(null);
+
   const isDownloaded = downloads.some(d => d.id === videoId);
   const isSubscribed = currentUser && channel ? currentUser.subscriptions.includes(channel.id) : false;
 
   useEffect(() => {
+    setPlaying(true); // Autoplay on new video load
     const fetchVideoData = async () => {
       if (!videoId) return;
       setLoading(true);
@@ -67,6 +83,26 @@ const Watch: React.FC = () => {
     fetchVideoData();
   }, [videoId, playVideo, location.pathname, showAd]);
   
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
+        setIsActionsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleMouseMove = () => {
+    setShowControls(true);
+    if (controlsTimeout.current) {
+        clearTimeout(controlsTimeout.current);
+    }
+    controlsTimeout.current = window.setTimeout(() => {
+        setShowControls(false);
+    }, 3000);
+  };
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -75,20 +111,24 @@ const Watch: React.FC = () => {
 
         switch (e.key.toLowerCase()) {
             case 'f':
-                playerRef.current?.getInternalPlayer()?.requestFullscreen();
+                toggleFullscreen();
                 break;
             case 'm':
-                 const internalPlayer = playerRef.current?.getInternalPlayer();
-                 if (internalPlayer && typeof internalPlayer.mute === 'function') {
-                    if (internalPlayer.isMuted()) {
-                      internalPlayer.unMute();
-                    } else {
-                      internalPlayer.mute();
-                    }
-                 }
+                 setMuted(prev => !prev);
                 break;
             case 't':
                 setTheatreMode(prev => !prev);
+                break;
+            case ' ':
+            case 'k':
+                e.preventDefault();
+                setPlaying(p => !p);
+                break;
+            case 'arrowleft':
+                playerRef.current?.seekTo(playerRef.current.getCurrentTime() - 5);
+                break;
+            case 'arrowright':
+                playerRef.current?.seekTo(playerRef.current.getCurrentTime() + 5);
                 break;
         }
     };
@@ -156,6 +196,37 @@ const Watch: React.FC = () => {
     isDownloaded ? removeFromDownloads(video.id) : addToDownloads(video);
   }
 
+  const handleSeekMouseDown = () => setSeeking(true);
+  const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setProgress(prev => ({ ...prev, played: parseFloat(e.target.value) }));
+  };
+  const handleSeekMouseUp = (e: React.MouseEvent<HTMLInputElement>) => {
+    setSeeking(false);
+    playerRef.current?.seekTo(parseFloat((e.target as HTMLInputElement).value));
+  };
+  const toggleFullscreen = () => {
+      if (playerWrapperRef.current) {
+        if (!document.fullscreenElement) {
+            playerWrapperRef.current.requestFullscreen().catch(err => {
+              alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+      }
+  };
+  const formatTime = (seconds: number) => {
+    if (isNaN(seconds)) return '00:00';
+    const date = new Date(seconds * 1000);
+    const hh = date.getUTCHours();
+    const mm = date.getUTCMinutes();
+    const ss = date.getUTCSeconds().toString().padStart(2, "0");
+    if (hh) {
+      return `${hh}:${mm.toString().padStart(2, "0")}:${ss}`;
+    }
+    return `${mm}:${ss}`;
+  };
+
   const isVideoInPlayer = currentVideo?.id === videoId;
 
   if (loading) return <WatchSkeleton />;
@@ -171,27 +242,71 @@ const Watch: React.FC = () => {
             onClose={() => setIsPlaylistModalOpen(false)}
         />
     )}
+    {reportingContent && (
+        <ReportModal
+            contentId={reportingContent.id}
+            contentType={reportingContent.type}
+            onClose={() => setReportingContent(null)}
+        />
+    )}
     <div className={`flex ${theatreMode ? 'flex-col' : 'flex-col lg:flex-row'} gap-6 p-4 sm:p-6 lg:p-8 max-w-screen-2xl mx-auto`}>
       <div className={`${theatreMode ? 'w-full' : 'lg:w-2/3'} flex-grow`}>
         {!isVideoInPlayer && (
-            <div className="aspect-video bg-black rounded-xl overflow-hidden shadow-lg relative group">
+            <div ref={playerWrapperRef} onMouseMove={handleMouseMove} className="aspect-video bg-black rounded-xl overflow-hidden shadow-lg relative group">
                 {isPremiere ? <PremiereCountdown premiereTime={video.premiereTime!} /> : (
+                    <>
                     <ReactPlayer 
                         ref={playerRef}
                         url={video.videoUrl} 
-                        controls 
-                        playing={!isAdPlaying}
+                        controls={false}
+                        playing={playing && !isAdPlaying}
+                        volume={volume}
+                        muted={muted}
+                        onProgress={setProgress}
+                        onDuration={setDuration}
                         width="100%" 
                         height="100%" 
                         light={video.thumbnailUrl} />
-                )}
-                {!isPremiere && (
-                    <button 
-                      onClick={() => setTheatreMode(!theatreMode)}
-                      className="absolute bottom-12 right-2 bg-black/50 p-2 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                      title={theatreMode ? 'Default View' : 'Theatre Mode'}>
-                      {theatreMode ? <ArrowsPointingInIcon className="w-5 h-5"/> : <ArrowsPointingOutIcon className="w-5 h-5"/>}
-                    </button>
+
+                    <div className={`absolute inset-0 transition-opacity duration-300 ${!playing || showControls ? 'opacity-100' : 'opacity-0'}`}>
+                        {/* Play/Pause overlay button */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <button onClick={() => setPlaying(p => !p)} className="bg-black/50 p-4 rounded-full text-white">
+                                {playing ? <PauseIcon className="w-10 h-10"/> : <PlayIcon className="w-10 h-10"/>}
+                            </button>
+                        </div>
+
+                        {/* Controls */}
+                        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
+                           <div className="flex items-center gap-4 text-white">
+                               <button onClick={() => setPlaying(p => !p)}>
+                                   {playing ? <PauseIcon className="w-6 h-6"/> : <PlayIcon className="w-6 h-6"/>}
+                               </button>
+                               <div className="flex items-center gap-2">
+                                   <button onClick={() => setMuted(m => !m)}>
+                                       {muted || volume === 0 ? <SpeakerXMarkIcon className="w-6 h-6"/> : <SpeakerWaveIcon className="w-6 h-6"/>}
+                                   </button>
+                                   <input type="range" min={0} max={1} step="any" value={muted ? 0 : volume} onChange={(e) => {setVolume(parseFloat(e.target.value)); setMuted(false);}} className="w-24 h-1 accent-brand-red"/>
+                               </div>
+                               <span className="text-xs">{formatTime(progress.playedSeconds)} / {formatTime(duration)}</span>
+                               <div className="flex-grow mx-2">
+                                   <input type="range" min={0} max={0.999999} step="any" value={progress.played}
+                                   onMouseDown={handleSeekMouseDown}
+                                   onChange={handleSeekChange}
+                                   onMouseUp={handleSeekMouseUp}
+                                   className="w-full h-1 accent-brand-red cursor-pointer" />
+                               </div>
+                               <button 
+                                  onClick={() => setTheatreMode(!theatreMode)}
+                                  className="p-1"
+                                  title={theatreMode ? 'Default View' : 'Theatre Mode'}>
+                                  {theatreMode ? <ArrowsPointingInIcon className="w-5 h-5"/> : <ArrowsPointingOutIcon className="w-5 h-5"/>}
+                                </button>
+                               <button onClick={toggleFullscreen} className="p-1"><ArrowsPointingOutIcon className="w-6 h-6"/></button>
+                           </div>
+                        </div>
+                    </div>
+                    </>
                 )}
             </div>
         )}
@@ -237,18 +352,50 @@ const Watch: React.FC = () => {
                 <ArrowDownTrayIcon className="w-5 h-5" />
                 <span className="text-sm font-semibold">{isDownloaded ? 'Downloaded' : 'Download'}</span>
               </button>
+              <div ref={actionsMenuRef} className="relative">
+                <button onClick={() => setIsActionsMenuOpen(p => !p)} className="p-2 bg-light-element dark:bg-dark-element hover:bg-light-element/80 dark:hover:bg-dark-surface rounded-full transition-colors">
+                    <EllipsisHorizontalIcon className="w-5 h-5"/>
+                </button>
+                 {isActionsMenuOpen && (
+                    <div className="absolute top-full right-0 mt-2 w-48 bg-light-surface dark:bg-dark-surface rounded-md shadow-lg py-1 z-20 border border-light-element dark:border-dark-element">
+                        <button onClick={() => { setReportingContent({id: video.id, type: 'video'}); setIsActionsMenuOpen(false); }} className="w-full text-left flex items-center gap-3 px-4 py-2 text-sm hover:bg-light-element dark:hover:bg-dark-element">
+                            <FlagIcon className="w-5 h-5"/>
+                            Report
+                        </button>
+                    </div>
+                 )}
+              </div>
             </div>
           </div>
           <div className="bg-light-surface dark:bg-dark-surface rounded-xl p-4 mt-4">
             <p className="font-semibold">{video.views} &bull; {video.uploadedAt}</p>
             <p className="mt-2 text-sm whitespace-pre-wrap text-light-text-secondary dark:text-dark-text-secondary">{video.description}</p>
           </div>
+          {/* Chapters Section */}
+          {video.chapters && video.chapters.length > 0 && (
+            <div className="bg-light-surface dark:bg-dark-surface rounded-xl p-4 mt-4">
+                <h3 className="font-semibold text-lg mb-2">Chapters</h3>
+                <div className="space-y-2">
+                    {video.chapters.map((chapter) => (
+                        <button key={chapter.time} onClick={() => playerRef.current?.seekTo(chapter.time)} className="w-full text-left flex items-center gap-4 p-2 rounded-lg hover:bg-light-element dark:hover:bg-dark-element">
+                           <span className="font-mono text-sm text-brand-red">{formatTime(chapter.time)}</span>
+                           <span className="font-semibold">{chapter.title}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+          )}
         </div>
 
         {/* Comments Section */}
         {(!video.isLive && !isPremiere) && (
             <div className="mt-6">
-                <CommentThread videoId={video.id} comments={comments} setComments={setComments} />
+                <CommentThread 
+                    videoId={video.id} 
+                    comments={comments} 
+                    setComments={setComments}
+                    onReportComment={(commentId) => setReportingContent({ id: commentId, type: 'comment' })}
+                />
             </div>
         )}
       </div>

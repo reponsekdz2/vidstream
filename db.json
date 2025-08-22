@@ -2,10 +2,10 @@
   "users": [
     {
       "id": "user-1",
-      "name": "Admin User",
-      "email": "admin@vidstream.com",
+      "name": "Alice",
+      "email": "alice@vidstream.com",
       "password": "$2a$10$Y.3.G8i9g.N5.LW/C4.Ua.H8fJ0.f.Q.e.f3jJ2.g5lJ6kH4mI8rK",
-      "avatarUrl": "https://i.pravatar.cc/150?u=admin@vidstream.com",
+      "avatarUrl": "https://i.pravatar.cc/150?u=alice@vidstream.com",
       "subscribers": 15,
       "subscriptions": [
         "user-2",
@@ -29,7 +29,33 @@
       },
       "channelLayout": [],
       "blockedUsers": [],
-      "bannedWords": []
+      "bannedWords": [],
+      "role": "USER"
+    },
+    {
+      "id": "admin-001",
+      "name": "reponse",
+      "email": "admin@vidstream.com",
+      "password": "$2a$10$JIK/B2kHDU/hsY.HeKzCGe8L0V3yJ8/d./9eEgoNEjA0A10J1dY72",
+      "avatarUrl": "https://i.pravatar.cc/150?u=admin@vidstream.com",
+      "subscribers": 0,
+      "subscriptions": [],
+      "settings": {
+        "notifications": {
+          "newUploads": true,
+          "comments": true,
+          "mentions": true
+        },
+        "playback": {
+          "defaultQuality": "Auto",
+          "autoplay": true
+        },
+        "privacy": {
+          "showLikedVideos": true,
+          "showSubscriptions": true
+        }
+      },
+      "role": "ADMIN"
     }
   ],
   "videos": [],
@@ -95,5 +121,6 @@
     }
   ],
   "premieres": [],
-  "premiumUsers": []
+  "premiumUsers": [],
+  "reports": []
 }

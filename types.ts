@@ -37,6 +37,12 @@ export interface User {
   channelLayout: ChannelLayoutShelf[];
   blockedUsers: string[];
   bannedWords: string[];
+  role: 'USER' | 'ADMIN';
+}
+
+export interface VideoChapter {
+    time: number; // in seconds
+    title: string;
 }
 
 export interface Video {
@@ -62,10 +68,11 @@ export interface Video {
   genre: string;
   likes: number;
   premiereTime?: string; // ISO String
+  chapters?: VideoChapter[];
 }
 
 export interface Short {
-  id: string;
+  id:string;
   videoUrl: string;
   user: {
     name: string;
@@ -214,4 +221,15 @@ export interface Ad {
 export interface Premiere {
     videoId: string;
     premiereTime: string; // ISO String
+}
+
+export interface Report {
+  id: string;
+  contentType: 'video' | 'comment';
+  contentId: string;
+  reporterId: string;
+  reason: string;
+  timestamp: string; // ISO String
+  status: 'pending' | 'resolved';
+  contentDetails?: Video | Comment; // To be populated on the backend for admin view
 }
