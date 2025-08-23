@@ -42,7 +42,7 @@ export const createCommunityPost = async (req, res) => {
         user: { name: user.name, avatarUrl: user.avatarUrl },
         text,
         imageUrl,
-        poll: pollOptions ? pollOptions.map((opt: string) => ({ id: uuidv4(), text: opt, votes: 0 })) : undefined,
+        poll: pollOptions ? pollOptions.map((opt) => ({ id: uuidv4(), text: opt, votes: 0 })) : undefined,
         likes: 0,
         timestamp: new Date().toISOString(),
     };

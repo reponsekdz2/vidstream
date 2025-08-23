@@ -91,4 +91,4 @@ Here's a glimpse into the modern and intuitive VidStream interface.
 
 To access the powerful admin features, log in with the following credentials:
 -   **Email:** `admin@vidstream.com`
--   **Password:** `2025`
+-   **Password:** `password123`
