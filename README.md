@@ -84,8 +84,22 @@ Here's a glimpse into the modern and intuitive VidStream interface.
 
 ## 🚀 Getting Started
 
-1.  **Dependencies:** Ensure you have Node.js installed.
-2.  **Run the Server:** The project is configured to run the backend server automatically.
+1.  **Install Dependencies:**
+    ```bash
+    npm install
+    ```
+
+2.  **Development Mode (with Hot Reloading):**
+    For the best development experience with live updates, run the `dev` script. This will start the backend server on `http://localhost:8080` and the frontend Vite server on `http://localhost:5173`.
+    ```bash
+    npm run dev
+    ```
+
+3.  **Production-like Mode (Single Port):**
+    To build the frontend and serve it from the backend on a single port (`http://localhost:8080`), use the `start` script.
+    ```bash
+    npm start
+    ```
 
 ### Admin Credentials
 

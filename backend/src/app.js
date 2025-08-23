@@ -29,20 +29,37 @@ app.use(requestLogger);
 
 // --- Static File Serving ---
 
-// Serve files from the 'uploads' directory at the root of the project
+// Serve uploaded media files from the 'uploads' directory
 const uploadsPath = path.join(__dirname, '../../../uploads');
 app.use('/uploads', express.static(uploadsPath));
 
 
 // --- API Routes ---
 
-// Mount the main API router at the /api endpoint
+// Mount the main API router at the /api endpoint.
+// This must come BEFORE the frontend serving logic.
 app.use('/api', api);
+
+
+// --- Serve Frontend Application (Production-like) ---
+
+// Define the path to the built frontend assets
+const frontendDistPath = path.join(__dirname, '../../../dist');
+
+// Serve static files from the React build directory
+app.use(express.static(frontendDistPath));
+
+// The "catchall" handler for client-side routing: for any request that doesn't
+// match an API route or a static file, send back the main index.html file.
+app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+});
 
 
 // --- Error Handling ---
 
-// Centralized error handler for catching and formatting all errors
+// Centralized error handler for catching and formatting all errors.
+// This must be the last piece of middleware.
 app.use(errorHandler);
 
 export default app;

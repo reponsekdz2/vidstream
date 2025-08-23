@@ -23,11 +23,21 @@ export const getMonetizationData = (req, res) => {
   const totalViews = videos.reduce((sum, v) => sum + v.viewCount, 0);
   const currentWatchHours = Math.round(totalViews / 200); // Simulated
 
+  const superThanksRevenue = db.data.transactions
+      .filter(t => t.toUserId === id && t.type === 'SUPER_THANKS')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+  const membershipRevenue = db.data.transactions
+      .filter(t => t.toUserId === id && t.type === 'MEMBERSHIP')
+      .reduce((sum, t) => sum + t.amount, 0);
+
   const data = {
     isEligible: currentSubs >= requiredSubs && currentWatchHours >= requiredWatchHours,
     subscribers: { current: currentSubs, required: requiredSubs },
     watchHours: { current: currentWatchHours, required: requiredWatchHours },
     estimatedEarnings: generateEarnings(),
+    superThanksRevenue,
+    membershipRevenue,
   };
 
   res.json(data);
