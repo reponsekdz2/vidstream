@@ -1,5 +1,7 @@
 # VidStream - A Modern, Feature-Rich Video Streaming Platform
 
+**[➡️ Live Demo](https://aistudio.google.com/apps/drive/1hiJE8aLHGU7Ge81itBRHH2sxWiJhrN0B?showPreview=true&showAssistant=true&showCode=true&showTreeView=true)**
+
 VidStream is a full-featured video streaming application inspired by YouTube, built with a modern tech stack and designed for a premium user experience. It goes beyond a simple clone by incorporating a suite of advanced features for creators, viewers, and administrators, all powered by a newly architected, robust, and scalable backend.
 
 ---
